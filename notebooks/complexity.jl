@@ -4,18 +4,33 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ c7417c94-3903-11ee-1ff1-89b2f3eb8673
-using GenericTensorNetworks, PlutoUI, WGLMakie
+begin
+	using GenericTensorNetworks, PlutoUI, WGLMakie
+	# `show_graph` and `show_gallery` are for visualizing graphs
+	using GenericTensorNetworks.LuxorGraphPlot: show_graph, show_gallery
+	# Graphs is a package for graph operations
+	using GenericTensorNetworks.Graphs: nv, SimpleGraph, has_edge, add_edge!
+end
 
-# ╔═╡ 4a026bc3-00ab-4de4-8877-3f8cc699580a
-# define a spin-glass problem
-using LuxorGraphPlot
+# ╔═╡ e0467b35-0ffc-4589-8483-3e520bab8f4a
+using TensorInference
 
-# ╔═╡ 5ec5c112-c4d9-47b2-b127-e5882045ec7a
-using Graphs
+# ╔═╡ 7ba68748-87d6-41bc-a7c5-8d2c27bad233
+using UnitDiskMapping
 
-# ╔═╡ dc2999e1-dce6-424c-9429-0c99a5539a3d
-using Zygote
+# ╔═╡ c662789f-19d1-4b75-ab95-dbe12c11330d
+TableOfContents()
 
 # ╔═╡ e1a91e60-ef9e-4e71-b458-16be6920881c
 empty_theme = Theme(
@@ -49,11 +64,46 @@ plot_theme = Theme(
     )
 )
 
+# ╔═╡ 0f2c3023-262e-4afb-bf06-a8e8422f7339
+# utility for showing a configuration
+function show_config(locs, graph, config)
+	show_graph(graph; locs, texts=fill("", nv(graph)), vertex_colors=[x == 1 ? "red" : "white" for x in config])
+end
+
+# ╔═╡ 541dd885-fc34-48d3-a71f-b1e4f8b8d41a
+# utility for comparing two configurations
+function compare_configs(locs, graph, config1, config2)
+	colormap = Dict((0, 0)=>"white", (0, 1)=>"blue", (1, 0)=>"red", (1, 1)=>"purple")
+	show_graph(graph; locs, texts=fill("", nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
+end
+
+# ╔═╡ 75837e42-6cdc-48c3-9568-639ccb48253f
+md"# Why ground state finding of a many body system is difficult?"
+
 # ╔═╡ fb341231-b682-4abc-a9d6-99e5ab54cd0e
 md"# Hard Core Lattice Gas"
 
+# ╔═╡ 2d649ed5-21f3-4486-9bc6-15532218d30f
+md"""
+Hard-core lattice gas refers to a model used in statistical physics to study the behavior of particles on a lattice, where the particles are subject to an exclusion principle known as the "hard-core" interaction that characterized by a blockade radius. Distances between two particles can not be smaller than this radius.
+"""
+
+# ╔═╡ b9c03db7-4322-4d6f-88ea-0ef068d53554
+md"""
+* Nath T, Rajesh R. Multiple phase transitions in extended hard-core lattice gas models in two dimensions[J]. Physical Review E, 2014, 90(1): 012120.
+* Fernandes H C M, Arenzon J J, Levin Y. Monte Carlo simulations of two-dimensional hard core lattice gases[J]. The Journal of chemical physics, 2007, 126(11).
+"""
+
 # ╔═╡ b5c566f4-cfc4-4600-90a0-8be7fa5f86d4
-# define a geometric graph
+md"""
+Let define a $10 \times 10$ triangular lattice, with unit vectors
+```math
+\begin{align}
+\vec a &= \left(\begin{matrix}1 \\ 0\end{matrix}\right)\\
+\vec b &= \left(\begin{matrix}\frac{1}{2} \\ \frac{\sqrt{3}}{2}\end{matrix}\right)
+\end{align}
+```
+"""
 
 # ╔═╡ e8e5e413-a89f-4776-bc46-60806ae3d2d2
 a, b = (1, 0), (0.5, 0.5*sqrt(3))
@@ -62,62 +112,98 @@ a, b = (1, 0), (0.5, 0.5*sqrt(3))
 Na, Nb = 10, 10
 
 # ╔═╡ 4386bbc2-57fd-4d04-b9f9-c7f7ff006450
-# triangle lattice
+# triangle lattice site locations
 sites = [a .* i .+ b .* j for i=1:Na, j=1:Nb]
 
-# ╔═╡ 62a7876c-15bc-4634-8834-0b134c0c8857
-with_theme(empty_theme) do
-	scatter(vec(sites); color=:black)
-end
+# ╔═╡ 880d132c-1f10-4eb5-a1b7-d7b9ed74b5f9
+md"""
+Since triangular lattice is a unit-disk graph, we can generate the graph topology with the location information and the blockade radius.
+"""
 
 # ╔═╡ 3a27f87d-6c94-4329-8033-41834cc41612
-radius = 1.1
-
-# ╔═╡ 5017fff5-c8e4-4500-bee6-aca832fa8356
-with_theme(empty_theme) do
-	fig, ax, _ = scatter(vec(sites); color=:black)
-	for x in sites, y in sites
-		if sum(abs2, x .- y) <= radius ^ 2
-			lines!([x, y], color=:black)
-		end
-	end
-	fig
-end
+blockade_radius = 1.1
 
 # ╔═╡ f0bff7ba-5d70-4d50-9a9a-903af4f32763
-graph = unit_disk_graph(vec(sites), radius)
+graph = unit_disk_graph(vec(sites), blockade_radius)
 
 # ╔═╡ 7e18a38e-bc88-43a2-a996-c14892597708
 show_graph(graph; locs=sites, texts=fill("", length(sites)))
 
+# ╔═╡ 9d00d7ae-df2e-4f69-894d-cf588a4823fc
+md"""
+Let $G = (V, E)$ be a graph, where $V$ is the set of vertices and $E$ be the set of edges. The energy model for the hard-core lattice gas problem is
+```math
+E(\mathbf{n}) = -\sum_{i \in V}w_i n_i + \infty \sum_{(i, j) \in E} n_i n_j
+```
+where $n_i \in \{0, 1\}$ is the number of particles at site $i$, and $w_i$ is the weight associated with it. For unweighted graphs, the weights are uniform.
+"""
+
+# ╔═╡ 4828777e-9a9f-4e38-bac3-3bad5849a59b
+md"""
+# Solution Space Properties
+"""
+
+# ╔═╡ 9c1119f9-1bd6-434c-8faa-97470138449d
+md"""
+* Liu J G, Gao X, Cain M, et al. Computing solution space properties of combinatorial optimization problems via generic tensor networks[J]. SIAM Journal on Scientific Computing, 2023, 45(3): A1239-A1270.
+"""
+
+# ╔═╡ 617f67a7-f734-40b0-b452-60f8bcaae9eb
+md"""
+The solution space hard-core lattice gas is equivalent to that of an independent set problem. The independent set problem involves finding a set of vertices in a graph such that no two vertices in the set are adjacent (i.e., there is no edge connecting them).
+One can create a tensor network based modeling of an independent set problem with package [`GenericTensorNetworks.jl`](https://github.com/QuEraComputing/GenericTensorNetworks.jl).
+"""
+
+# ╔═╡ e432439e-6514-4d8e-ade4-624b506b7eac
+md"The `IndependentSet` constructor not only create a tensor network representation, but also optimizes the contraction order of this tensor network.
+Here, we choose `GreedyMethod` optimizer. A list of available optimizers are listed in package [OMEinsumContractionOrders.jl](https://github.com/TensorBFS/OMEinsumContractionOrders.jl)"
+
 # ╔═╡ 1577ef93-a6b0-4169-8d4d-0b59ccb98462
-problem = IndependentSet(graph; optimizer=TreeSA())
+problem = IndependentSet(graph; optimizer=GreedyMethod())
+
+# ╔═╡ a5308f72-846c-4429-b80f-c39339a32e0f
+md"""
+!!! note
+	Explain the tensor network structure on the blackboard. If we have time, I will explain the tensor contraction order finding algorithms.
+"""
+
+# ╔═╡ 22926001-97f0-4ed4-8c00-b5796990dccf
+md"Before doing any computation, please check the time, space and read-write complexity. The return values are log2 values of the number of operations."
 
 # ╔═╡ 3164fe9e-8746-4e04-b424-9c2f71799e86
 timespacereadwrite_complexity(problem)
 
+# ╔═╡ 67b1ff04-ecea-45eb-8c9f-58036b89a478
+md"""
+### Finding a best solution
+A standard task of a combinatorial a optimization problem is to get one of the best solutions. `GenericTensorNetworks` provides a unified interface for solution space property solving `solve(problem, property)`. The resulting value is always a tensor, its rank is equal to the number of open indices. Since we do not have open vertices in our demo problem, the return value is a rank-0 tensor.
+"""
+
 # ╔═╡ 899a0d52-d6ea-494a-808f-5b1ae1fdfba2
-res = solve(problem, SingleConfigMax())
+bestconfig = solve(problem, SingleConfigMax())[]
 
 # ╔═╡ c550dd35-d27e-4ac9-933c-f297bda19378
-show_graph(graph; locs=sites, texts=fill("", length(sites)), vertex_colors=[x == 1 ? "red" : "black" for x in res[].c.data])
+show_config(sites, graph, bestconfig.c.data)
+
+# ╔═╡ b63b8f93-bfe2-41ca-a12a-ef0a288e65e4
+md"""
+If one is only interested in finding the maximum solution size, the `SizeMax` property can be must faster to evaluate.
+"""
+
+# ╔═╡ ed163991-60e3-4978-b816-67d968b69312
+maximum_size = solve(problem, SizeMax())[]
+
+# ╔═╡ 8713bbef-136e-4b7a-a89f-181b70768481
+md"""
+### Computing the partition function
+```math
+Z = \sum_{\mathbf{n}} e^{-\beta E({\mathbf{n}})},
+```
+where the summation runs over all $2^{|V|}$ configurations of $\mathbf{n}$.
+"""
 
 # ╔═╡ 5fb3b68c-2bac-4a44-b7fd-b00524e092df
-Z = solve(problem, PartitionFunction(2.0))[]
-
-# ╔═╡ 825ea374-3846-44fb-8c32-1096ba859c00
-Zygote.gradient(β -> solve(problem, PartitionFunction(β))[], 2.0)
-
-# ╔═╡ 17ccecf8-8809-4d24-8943-fa9feed1b975
-poly = solve(problem, GraphPolynomial())[]
-
-# ╔═╡ 0cbe86ed-40ca-4d63-acfb-68e0db834e58
-with_theme(plot_theme) do
-	fig, ax, _ = plot(0:length(poly.coeffs)-1, log.(poly.coeffs))
-	ax.xlabel="number of atoms"
-	ax.ylabel="log(number of configurations)"
-	fig
-end
+Z = solve(problem, PartitionFunction(-2.0))[]
 
 # ╔═╡ 36a35136-a9ab-42c6-a9e1-1caac9869e17
 md"# Solution Space"
@@ -131,37 +217,402 @@ suboptimal = collect(max2configs[1].coeffs[1])
 # ╔═╡ f044457b-bd98-44fe-bd23-5b7483b04a36
 optimal = collect(max2configs[1].coeffs[2])
 
-# ╔═╡ 5367fd98-3c7b-4ebc-8b63-10450e867626
-
-
 # ╔═╡ 8c34ffbd-b81e-403b-85b8-68f4958ee5b1
+function connected_by_swap_on_edge(v, w, graph)
+	diff = v ⊻ w
+	count_ones(diff) != 2 && return false
+	i, j = findall(==(1), diff)
+	return has_edge(graph, i, j)
+end
 
+# ╔═╡ 386710de-c7d7-469a-8c11-bfb9b2780993
+function connected_by_flip(v, w, graph)
+	diff = v ⊻ w
+	return count_ones(diff) == 1
+end
 
-# ╔═╡ 8987d3ea-6030-4061-9e6f-989e2261e645
+# ╔═╡ 5367fd98-3c7b-4ebc-8b63-10450e867626
+config_graph = let
+	vertices = [suboptimal..., optimal...]
+	config_graph = SimpleGraph(length(vertices))
+	for (i, v) in enumerate(vertices), (j, w) in enumerate(vertices)
+		if connected_by_swap_on_edge(v, w, graph) || connected_by_flip(v, w, graph)
+			add_edge!(config_graph, i, j)
+		end
+	end
+	config_graph
+end
 
+# ╔═╡ befebc4f-e87a-4148-978e-872a1954191f
+[connected_by_swap_on_edge(suboptimal[2], suboptimal[j], graph) for j=1:100]
+
+# ╔═╡ 3e0b902c-a004-45bd-b80b-caf20976db63
+compare_configs(sites, graph, suboptimal[2], suboptimal[3])
+
+# ╔═╡ 5669cbb3-adc4-4510-99fb-f23b379c9f79
+show_graph(config_graph, vertex_colors = [fill("black", length(suboptimal))..., fill("red", length(optimal))...], texts=fill("", nv(config_graph)), vertex_size=0.1)
+
+# ╔═╡ 6279b321-6c49-47df-9839-2ca5606d1a55
+md"""
+## Overlap gap property
+"""
+
+# ╔═╡ 03d4a833-1da9-427c-bba5-277dd756800e
+md"""
+* Gamarnik D. The overlap gap property: A topological barrier to optimizing over random structures[J]. Proceedings of the National Academy of Sciences, 2021, 118(41): e2108492118.
+"""
+
+# ╔═╡ db76819a-ce34-452b-9269-9f687cab4101
+let
+	configs = max2configs.coeffs[1] + max2configs.coeffs[2]
+	distri = hamming_distribution(generate_samples(configs, 1000), generate_samples(configs, 1000))
+	barplot(0:length(distri)-1, distri)
+end
+
+# ╔═╡ 9840ef13-ac5d-4d46-b3df-31892028ba98
+md"# Probabilistic Modeling"
+
+# ╔═╡ f32202e1-5964-4fa6-8aa1-6dd2cc17d17f
+md"""
+The package [`TensorInference.jl`](https://github.com/TensorBFS/TensorInference.jl) is mainly designed for Bayesian inference. It can also be used to analyse physical systems.
+* Murphy K P. Machine learning: a probabilistic perspective[M]. MIT press, 2012.
+
+The standard inference tasks include
+1. calculate the partition function (also known as the probability of evidence).
+2. compute the marginal probability distribution over each variable given
+   evidence.
+3. find the most likely assignment to all variables given evidence.
+4. find the most likely assignment to a set of query variables after
+   marginalizing out the remaining variables.
+5. draw samples from the posterior distribution given evidence.
+"""
+
+# ╔═╡ ec351d92-6508-408d-b1df-1ae574d5fc0f
+md"""
+We need to convert a combinatorial optimization problem instance in `GenericTensorNetworks` to a probabilistic model in `TensorInference`. The conversion is a bit hacky, which involves adding some unity tensors to the network.
+For simplicity, this conversion recomputes the contraction order. The reference of `TensorInference` will come out soon, if I forgot to update, please write an email to [jinguoliu@hkust-gz.edu.cn](mailto:jinguoliu@hkust-gz.edu.cn).
+"""
+
+# ╔═╡ e2c8848d-8a0e-44df-9600-7edceb9ca170
+# convert a combinatorial optimization problem to a probabilistic model
+function probabilistic_model(problem::GraphProblem, β::Real; evidence::Dict=Dict{Int,Int}(), optimizer=GreedyMethod(nrepeat=1))
+	lbs = labels(problem)
+	nflavors = length(flavors(problem))
+	# generate tensors for x = e^β
+	tensors = [[ones(nflavors) for i=1:length(lbs)]..., GenericTensorNetworks.generate_tensors(exp(β), problem)...]
+	ixs = GenericTensorNetworks.getixsv(problem.code)
+	iy = GenericTensorNetworks.getiyv(problem.code)
+	rawcode = GenericTensorNetworks.OMEinsum.DynamicEinCode([[[l] for l in lbs]..., ixs...], iy)
+	TensorNetworkModel(lbs, rawcode, tensors; evidence, optimizer, simplifier = nothing)
+end
+
+# ╔═╡ f9c4c094-dd56-4dbf-9a41-35cf6fa73115
+@bind β Slider(0:0.1:10; default=3.0)
+
+# ╔═╡ 3a7bd7bd-2dbb-4f14-9788-06b403d18683
+pmodel = probabilistic_model(problem, β)
+
+# ╔═╡ f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
+md"""
+## Marginal probabilities
+"""
+
+# ╔═╡ 5769a5d9-bc01-468b-acd0-a419a0405115
+mars = marginals(pmodel)
+
+# ╔═╡ 79bfb975-8e6b-4c9e-a7c6-142ee7aa9781
+sample(pmodel, 10)
+
+# ╔═╡ d8e784e7-8156-4f65-a8df-80162207d799
+function sample_sets(problem, βs, nsample)
+	n = solve(problem, SizeMax())[].n
+	pss = Vector{Int}[]
+	for β in βs
+		pmodel = probabilistic_model(problem, β)
+		ns = dropdims(sum(sample(pmodel, nsample); dims=1); dims=1)
+		push!(pss, [count(==(i), ns) for i=0:n])
+	end
+	return pss
+end
+
+# ╔═╡ 6f704bbe-0bf6-4371-8777-e05a621138e5
+for β = 1:3
+	pmodel = probabilistic_model(problem, β)
+	ns = dropdims(sum(sample(pmodel, 10); dims=1); dims=1)
+	ps = [count(==(i), ns) for i=0:bestconfig.n]
+	barplot(ps)
+	yield()
+end
+
+# ╔═╡ 22fac8cc-796c-4ef7-8f95-02baa34712ab
+show_graph(graph; locs=sites, vertex_colors=[(1-b, 1-b, 1-b) for b in getindex.(mars, 2)], texts=fill("", nv(graph)))
+
+# ╔═╡ 17ccecf8-8809-4d24-8943-fa9feed1b975
+poly = solve(problem, GraphPolynomial())[]
+
+# ╔═╡ d0823c1c-93f2-4c77-aebf-2af2077131e4
+samples = sample_sets(problem, 0:2:6, 1000)
+
+# ╔═╡ 0cbe86ed-40ca-4d63-acfb-68e0db834e58
+with_theme(plot_theme) do
+	ns = 0:length(poly.coeffs)-1
+	fig, ax, plt = plot(ns, log.(poly.coeffs))
+	ax.xlabel="number of atoms"
+	ax.ylabel="log(number of configurations)"
+	for (color, β, sample) in zip([RGBAf(0.8, 0.6, 0.1, 0.5), RGBAf(0.5, 0.7, 0.3, 0.5), RGBAf(0.6, 0.3, 0.3, 0.5), RGBAf(0.3, 0.7, 0.7, 0.5)], 0:2:6, samples)
+		log_sample = log.(max.(1, sample))
+		barplot!(ns, log_sample, color=color, opacity=0.4, label="β = $β")
+	end
+	#legend!(["β=1"])
+	axislegend("Samples", position = :lt)
+	fig
+end
+
+# ╔═╡ 9047cead-0c1e-48dc-80f3-84ec15ebf799
+md"## Maximum a posterior estimation"
+
+# ╔═╡ b26b418a-46e0-4f05-bdf5-6cebf725680d
+most_probable_config(pmodel)
+
+# ╔═╡ 79a65e23-8df1-47dc-b363-b4914fedd738
+let
+	pmodel = probabilistic_model(problem, β; evidence=Dict(1=>0))
+	most_probable_config(pmodel)
+end
 
 # ╔═╡ 05351dea-2443-41a0-b7f6-e27ee05fb50f
 md"""
 # Logic Gadgets
 """
 
+# ╔═╡ 4e9a32bd-e275-4056-ae43-d3b2bc3cbb63
+md"""
+* Nguyen M T, Liu J G, Wurtz J, et al. Quantum optimization with arbitrary connectivity using rydberg atom arrays[J]. PRX Quantum, 2023, 4(1): 010316.
+"""
+
+# ╔═╡ eb38545c-3388-41ec-a483-4e784cb7d2c4
+md"""
+### NOT gate
+"""
+
+# ╔═╡ 3f3f580c-8a18-430d-b785-4a0efa354188
+locs_not = [(0.0, 0.0), (0.0, 1.0)]
+
+# ╔═╡ 73a569ee-c503-4940-a30c-d36c9da949f2
+graph_not = unit_disk_graph(locs_not, 1.1)
+
+# ╔═╡ eb120b4f-6a41-4ac1-a47d-07991328b2d6
+show_graph(graph_not; locs=locs_not)
+
+# ╔═╡ 88a9dcaf-fe3c-465c-835b-20bb50ec3ab3
+let
+	configs = solve(IndependentSet(graph_not), ConfigsMax())[]
+	show_gallery(graph_not, (1, 2); locs=locs_not, vertex_configs=configs.c)
+end
+
+# ╔═╡ 7c7287c1-d9d3-4a8f-88d5-2ea79f1c29c9
+function show_all_ground_states(locs, weights, grid)
+	graph = unit_disk_graph(locs, 1.1)
+	configs = solve(IndependentSet(graph; weights), ConfigsMax())[]
+	show_gallery(graph, grid; locs=locs, vertex_configs=configs.c)
+end
+
+# ╔═╡ a818f1da-1f66-4e87-9dcb-b04f6962c4e4
+md"""
+### NOR gate
+"""
+
+# ╔═╡ 6b24db63-f9c4-42eb-b043-5ee61b5b2977
+locs_nor = [(0.0, -0.8), (-0.5, 0.0), (0.5, 0.0), (-0.5, 1.0), (0.5, 1.0)]
+
+# ╔═╡ 8bca8502-35f9-45dd-84d2-a796e541a53d
+graph_nor = unit_disk_graph(locs_nor, 1.1)
+
+# ╔═╡ 0a34ef4f-0a55-4c20-9203-f906b8d8a0fb
+show_graph(graph_nor; locs=locs_nor)
+
+# ╔═╡ a4f246ec-7971-4459-b938-e74f5e76ffc9
+md"$n_3 = \neg(n_1 \lor n_5)$"
+
+# ╔═╡ 7642d73a-b90e-4f9b-ba7e-a714adab8fcc
+show_all_ground_states(locs_nor, ones(Int, 5), (2, 2))
+
+# ╔═╡ 31e1ccc7-6482-4ca2-8f1d-2de8f11284a8
+md"""
+### NOT and NOR are universal
+```math
+\begin{align}
+x \lor y &= \neg {\rm NOR}(x, y)\\
+x \land y &= {\rm NOR}(\neg x, \neg y)
+\end{align}
+```
+"""
+
+# ╔═╡ 7cae9a40-f952-412f-832a-aa9a57f99b59
+md"""
+# Composibility of logic gates
+"""
+
+# ╔═╡ 4a989d95-1780-46c6-82f9-d76eaabfa1c1
+locs_or = [(0.0, -0.8), (-0.5, 0.0), (0.5, 0.0), (-0.5, 1.0), (0.5, 1.0), (1.5, 0.0)]
+
+# ╔═╡ 008c10ef-9f5c-4c94-ade8-e79f94c80209
+graph_or = unit_disk_graph(locs_or, 1.1)
+
+# ╔═╡ 28e1dd07-3204-460f-bab9-4ae850286408
+show_graph(graph_or; locs=locs_or)
+
+# ╔═╡ ce58582f-4c79-4a6f-8e80-fdb4124a8cff
+show_all_ground_states(locs_or, (x=ones(Int, 6); x[3]=2; x), (2, 2))
+
+# ╔═╡ 870582a9-b533-42c6-9296-e426d5500a72
+md"""
+```math
+x_6 = x_1 \lor x_5
+```
+"""
+
+# ╔═╡ 9895617a-f3b7-4730-aa4c-03d3f912bf47
+md"# Solving the integer factoring problem"
+
+# ╔═╡ 80e9c641-f5dc-42e7-a2ac-19922d5e7e87
+let
+	graph, pins = UnitDiskMapping.multiplier()
+	texts = fill("", length(graph.nodes))
+	texts[pins] .= ["x$i" for i=1:length(pins)]
+	show_grayscale(graph; unit=20)
+end
+
+# ╔═╡ d2a2818c-2a2e-4826-b8c3-6c7eb5ea089c
+md"One can call `map_factoring(M, N)` to map a factoring problem to the array multiplier grid of size (M, N). In the following example of (2, 2) array multiplier, the input integers are ``p = 2p_2+p_1`` and ``q= 2q_2+q_1``, and the output integer is ``m = 4m_3+2m_2+m_1``. The maximum independent set corresponds to the solution of ``pq = m``"
+
+# ╔═╡ e63e8133-8efd-4729-bdd6-277c7fd7202a
+mres = UnitDiskMapping.map_factoring(2, 2);
+
+# ╔═╡ c5885018-b6bc-40ae-b567-6a1d90361ac3
+show_pins(mres)
+
+# ╔═╡ 25620edb-e870-4d76-af78-c79ddff86a2c
+md"To solve this factoring problem, one can use the following statement:"
+
+# ╔═╡ 8739b5b7-b7e2-46f5-83f2-3a3ccee55c8f
+multiplier_output = UnitDiskMapping.solve_factoring(mres, 6) do g, ws
+	collect(Int, solve(IndependentSet(g; weights=ws), SingleConfigMax())[].c.data)
+end
+
+# ╔═╡ e3d65211-6b45-4854-9dab-0c16623363b6
+md"This function consists of the following steps:"
+
+# ╔═╡ 465eb0f9-2b9a-4180-9f15-a99b35aa87f2
+md"1. We first modify the graph by inspecting the fixed values, i.e., the output `m` and `0`s:
+    * If a vertex is fixed to 1, remove it and its neighbors,
+    * If a vertex is fixed to 0, remove this vertex.
+
+The resulting grid graph is
+"
+
+# ╔═╡ 396df758-d90a-4c2d-a5c3-53656f672797
+mapped_grid_graph, remaining_vertices = let
+	g, ws = graph_and_weights(mres.grid_graph)
+	mg, vmap = UnitDiskMapping.set_target(g, [mres.pins_zeros..., mres.pins_output...], 6 << length(mres.pins_zeros))
+	GridGraph(mres.grid_graph.size, mres.grid_graph.nodes[vmap], mres.grid_graph.radius), vmap
+end;
+
+# ╔═╡ 11d109d1-4b9c-42cd-b9b9-480c86df9abb
+show_graph(mapped_grid_graph)
+
+# ╔═╡ 2c9353ae-e194-4b40-a246-b03fbfb34d52
+md"2. Then, we solve this new grid graph."
+
+# ╔═╡ 2d3e7171-ba47-4002-b4f2-92773465090b
+config_factoring6 = let
+	mg, mw = graph_and_weights(mapped_grid_graph)
+	solve(IndependentSet(mg; weights=mw), SingleConfigMax())[].c.data
+end;
+
+# ╔═╡ f31f33a7-144b-4540-a029-2cd8d6398067
+UnitDiskMapping.show_config(mapped_grid_graph, config_factoring6)
+
+# ╔═╡ 37b9c75b-6419-4a4b-bc1c-019519c18ada
+md"3. It is straightforward to read out the results from the above configuration. The solution should be either (2, 3) or (3, 2)."
+
+# ╔═╡ 7c609e90-ecf6-4621-9934-8bbd347f0ffe
+let
+	cfg = zeros(Int, length(mres.grid_graph.nodes))
+	cfg[remaining_vertices] .= config_factoring6
+	bitvectors = cfg[mres.pins_input1], cfg[mres.pins_input2]
+	UnitDiskMapping.asint.(bitvectors)
+end
+
+# ╔═╡ d1a0ae13-2b62-4e12-ad08-bef58b264402
+md"""
+# Conclusion
+Solving the ground state of a many-body system must be difficult, otherwise someone cleverer than you could crack your password and steal your money.
+
+
+"""
+
+# ╔═╡ 34c612bc-a98f-4214-a9d3-dab01e8ca2b6
+html"""
+<p>To get a systematic understanding of computational complexity theory and its relation with statistical physics.</p>
+<table style="border:none">
+<tr>
+	<td rowspan=4>
+	<img src="https://images-na.ssl-images-amazon.com/images/I/51QttTd6JLL._SX351_BO1,204,203,200_.jpg" width=200px/>
+	</td>
+	<td rowspan=1 align="center">
+	<big>The Nature of Computation</big><br><br>
+	By <strong>Cristopher Moore & Stephan Mertens</strong>
+	</td>
+</tr>
+<tr>
+	<td align="center">
+	<strong>Section 5</strong>
+	<br><br>Who is the hardest one of All?
+	<br>NP-Completeness
+	</td>
+</tr>
+<tr>
+	<td align="center">
+	<strong>Section 13</strong>
+	<br><br>Counting, sampling and statistical physics
+	</td>
+</tr>
+</table>
+"""
+
+# ╔═╡ 1d042e40-bb13-485d-9233-a63addc7850a
+# html"""
+# <!-- include the jugsaw library -->
+# <div id="output"></div>
+# <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/Jugsaw/Jugsaw/js/jugsawirparser.js"></script>
+
+# <!-- The function call -->
+# <script>
+# // call
+# const context = new ClientContext({endpoint:"https://giggleliu-helloworld.hf.space"})
+# const app_promise = request_app(context, "helloworld")
+# const output = document.getElementById('output');
+# // keyword arguments are: String[]
+# app_promise.then(app=>app.call("greet", ["Jinguo"], [])).then(x=>output.innerHTML = x)
+# </script>
+# """
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 GenericTensorNetworks = "3521c873-ad32-4bb4-b63d-f4f178f42b49"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-LuxorGraphPlot = "1f49bdf2-22a7-4bc4-978b-948dc219fbbc"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+TensorInference = "c2297e78-99bd-40ad-871d-f50e56b81012"
+UnitDiskMapping = "1b61a8d9-79ed-4491-8266-ef37f39e1727"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
 GenericTensorNetworks = "~1.3.4"
-Graphs = "~1.8.0"
-LuxorGraphPlot = "~0.2.0"
 PlutoUI = "~0.7.52"
+TensorInference = "~0.2.0"
+UnitDiskMapping = "~0.3.1"
 WGLMakie = "~0.8.11"
-Zygote = "~0.6.63"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -170,7 +621,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "713ce6e702d01a7994cc9931612a4f3407b35269"
+project_hash = "4f1161b5c286e72e2faf5a4ce382df8673d247be"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -366,12 +817,6 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
 uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
-
-[[deps.ChainRules]]
-deps = ["Adapt", "ChainRulesCore", "Compat", "Distributed", "GPUArraysCore", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "Statistics", "StructArrays"]
-git-tree-sha1 = "f98ae934cd677d51d2941088849f0bf2f59e6f6e"
-uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "1.53.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -825,12 +1270,6 @@ deps = ["Logging", "Random"]
 git-tree-sha1 = "d75853a0bdbfb1ac815478bacd89cd27b550ace6"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.3"
-
-[[deps.IRTools]]
-deps = ["InteractiveUtils", "MacroTools", "Test"]
-git-tree-sha1 = "eac00994ce3229a464c2847e956d77a2c64ad3a5"
-uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
-version = "0.4.10"
 
 [[deps.ImageAxes]]
 deps = ["AxisArrays", "ImageBase", "ImageCore", "Reexport", "SimpleTraits"]
@@ -1566,12 +2005,6 @@ weakdeps = ["FixedPointNumbers"]
     [deps.Ratios.extensions]
     RatiosFixedPointNumbersExt = "FixedPointNumbers"
 
-[[deps.RealDot]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "9f0a1b71baaf7650f4fa8a1d168c7fb6ee41f0c9"
-uuid = "c1ae055f-0cd5-4b69-90a6-9a35b1a98df9"
-version = "0.1.0"
-
 [[deps.RecipesBase]]
 deps = ["PrecompileTools"]
 git-tree-sha1 = "5c3d09cc4f31f5fc6af001c250bf1278733100ff"
@@ -1853,6 +2286,12 @@ git-tree-sha1 = "1feb45f88d133a655e001435632f019a9a1bcdb6"
 uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 version = "0.1.1"
 
+[[deps.TensorInference]]
+deps = ["Artifacts", "CUDA", "DocStringExtensions", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
+git-tree-sha1 = "bfbeced458b87c6434a78465a1b52caaa90601b4"
+uuid = "c2297e78-99bd-40ad-871d-f50e56b81012"
+version = "0.2.0"
+
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
@@ -1923,6 +2362,12 @@ deps = ["REPL"]
 git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
+
+[[deps.UnitDiskMapping]]
+deps = ["Graphs", "LuxorGraphPlot"]
+git-tree-sha1 = "961ab9b48ff51fe185aa1595ceac24b8d9b6c0a4"
+uuid = "1b61a8d9-79ed-4491-8266-ef37f39e1727"
+version = "0.3.1"
 
 [[deps.UnsafeAtomics]]
 git-tree-sha1 = "6331ac3440856ea1988316b46045303bef658278"
@@ -2024,28 +2469,6 @@ git-tree-sha1 = "49ce682769cd5de6c72dcf1b94ed7790cd08974c"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.5.5+0"
 
-[[deps.Zygote]]
-deps = ["AbstractFFTs", "ChainRules", "ChainRulesCore", "DiffRules", "Distributed", "FillArrays", "ForwardDiff", "GPUArrays", "GPUArraysCore", "IRTools", "InteractiveUtils", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NaNMath", "PrecompileTools", "Random", "Requires", "SparseArrays", "SpecialFunctions", "Statistics", "ZygoteRules"]
-git-tree-sha1 = "e2fe78907130b521619bc88408c859a472c4172b"
-uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
-version = "0.6.63"
-
-    [deps.Zygote.extensions]
-    ZygoteColorsExt = "Colors"
-    ZygoteDistancesExt = "Distances"
-    ZygoteTrackerExt = "Tracker"
-
-    [deps.Zygote.weakdeps]
-    Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
-    Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
-    Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
-
-[[deps.ZygoteRules]]
-deps = ["ChainRulesCore", "MacroTools"]
-git-tree-sha1 = "977aed5d006b840e2e40c0b48984f7463109046d"
-uuid = "700de1a5-db45-46bc-99cf-38207098b444"
-version = "0.2.3"
-
 [[deps.gdk_pixbuf_jll]]
 deps = ["Artifacts", "Glib_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg", "Xorg_libX11_jll", "libpng_jll"]
 git-tree-sha1 = "e9190f9fb03f9c3b15b9fb0c380b0d57a3c8ea39"
@@ -2124,36 +2547,111 @@ version = "3.5.0+0"
 
 # ╔═╡ Cell order:
 # ╠═c7417c94-3903-11ee-1ff1-89b2f3eb8673
-# ╠═4a026bc3-00ab-4de4-8877-3f8cc699580a
+# ╠═c662789f-19d1-4b75-ab95-dbe12c11330d
 # ╠═e1a91e60-ef9e-4e71-b458-16be6920881c
 # ╠═877f87b9-59e4-4577-897c-eef44aa6e2eb
+# ╠═0f2c3023-262e-4afb-bf06-a8e8422f7339
+# ╠═541dd885-fc34-48d3-a71f-b1e4f8b8d41a
+# ╟─75837e42-6cdc-48c3-9568-639ccb48253f
 # ╟─fb341231-b682-4abc-a9d6-99e5ab54cd0e
-# ╠═b5c566f4-cfc4-4600-90a0-8be7fa5f86d4
+# ╟─2d649ed5-21f3-4486-9bc6-15532218d30f
+# ╟─b9c03db7-4322-4d6f-88ea-0ef068d53554
+# ╟─b5c566f4-cfc4-4600-90a0-8be7fa5f86d4
 # ╠═e8e5e413-a89f-4776-bc46-60806ae3d2d2
 # ╠═b587036b-2043-4774-a19a-e5f9835337e9
 # ╠═4386bbc2-57fd-4d04-b9f9-c7f7ff006450
-# ╠═62a7876c-15bc-4634-8834-0b134c0c8857
+# ╟─880d132c-1f10-4eb5-a1b7-d7b9ed74b5f9
 # ╠═3a27f87d-6c94-4329-8033-41834cc41612
-# ╠═5017fff5-c8e4-4500-bee6-aca832fa8356
-# ╠═5ec5c112-c4d9-47b2-b127-e5882045ec7a
 # ╠═f0bff7ba-5d70-4d50-9a9a-903af4f32763
 # ╠═7e18a38e-bc88-43a2-a996-c14892597708
+# ╟─9d00d7ae-df2e-4f69-894d-cf588a4823fc
+# ╟─4828777e-9a9f-4e38-bac3-3bad5849a59b
+# ╟─9c1119f9-1bd6-434c-8faa-97470138449d
+# ╟─617f67a7-f734-40b0-b452-60f8bcaae9eb
+# ╟─e432439e-6514-4d8e-ade4-624b506b7eac
 # ╠═1577ef93-a6b0-4169-8d4d-0b59ccb98462
+# ╟─a5308f72-846c-4429-b80f-c39339a32e0f
+# ╟─22926001-97f0-4ed4-8c00-b5796990dccf
 # ╠═3164fe9e-8746-4e04-b424-9c2f71799e86
+# ╟─67b1ff04-ecea-45eb-8c9f-58036b89a478
 # ╠═899a0d52-d6ea-494a-808f-5b1ae1fdfba2
 # ╠═c550dd35-d27e-4ac9-933c-f297bda19378
+# ╟─b63b8f93-bfe2-41ca-a12a-ef0a288e65e4
+# ╠═ed163991-60e3-4978-b816-67d968b69312
+# ╟─8713bbef-136e-4b7a-a89f-181b70768481
 # ╠═5fb3b68c-2bac-4a44-b7fd-b00524e092df
-# ╠═dc2999e1-dce6-424c-9429-0c99a5539a3d
-# ╠═825ea374-3846-44fb-8c32-1096ba859c00
-# ╠═17ccecf8-8809-4d24-8943-fa9feed1b975
-# ╠═0cbe86ed-40ca-4d63-acfb-68e0db834e58
 # ╟─36a35136-a9ab-42c6-a9e1-1caac9869e17
 # ╠═3582dadd-ff87-4422-8f57-350be309858c
 # ╠═a88b18a5-5a5d-4e23-8fca-f81bb7511f33
 # ╠═f044457b-bd98-44fe-bd23-5b7483b04a36
 # ╠═5367fd98-3c7b-4ebc-8b63-10450e867626
 # ╠═8c34ffbd-b81e-403b-85b8-68f4958ee5b1
-# ╠═8987d3ea-6030-4061-9e6f-989e2261e645
+# ╠═386710de-c7d7-469a-8c11-bfb9b2780993
+# ╠═befebc4f-e87a-4148-978e-872a1954191f
+# ╠═3e0b902c-a004-45bd-b80b-caf20976db63
+# ╠═5669cbb3-adc4-4510-99fb-f23b379c9f79
+# ╟─6279b321-6c49-47df-9839-2ca5606d1a55
+# ╟─03d4a833-1da9-427c-bba5-277dd756800e
+# ╠═db76819a-ce34-452b-9269-9f687cab4101
+# ╟─9840ef13-ac5d-4d46-b3df-31892028ba98
+# ╟─f32202e1-5964-4fa6-8aa1-6dd2cc17d17f
+# ╠═e0467b35-0ffc-4589-8483-3e520bab8f4a
+# ╟─ec351d92-6508-408d-b1df-1ae574d5fc0f
+# ╠═e2c8848d-8a0e-44df-9600-7edceb9ca170
+# ╠═f9c4c094-dd56-4dbf-9a41-35cf6fa73115
+# ╠═3a7bd7bd-2dbb-4f14-9788-06b403d18683
+# ╟─f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
+# ╠═5769a5d9-bc01-468b-acd0-a419a0405115
+# ╠═79bfb975-8e6b-4c9e-a7c6-142ee7aa9781
+# ╠═d8e784e7-8156-4f65-a8df-80162207d799
+# ╠═6f704bbe-0bf6-4371-8777-e05a621138e5
+# ╠═22fac8cc-796c-4ef7-8f95-02baa34712ab
+# ╠═17ccecf8-8809-4d24-8943-fa9feed1b975
+# ╠═d0823c1c-93f2-4c77-aebf-2af2077131e4
+# ╠═0cbe86ed-40ca-4d63-acfb-68e0db834e58
+# ╟─9047cead-0c1e-48dc-80f3-84ec15ebf799
+# ╠═b26b418a-46e0-4f05-bdf5-6cebf725680d
+# ╠═79a65e23-8df1-47dc-b363-b4914fedd738
 # ╟─05351dea-2443-41a0-b7f6-e27ee05fb50f
+# ╟─4e9a32bd-e275-4056-ae43-d3b2bc3cbb63
+# ╟─eb38545c-3388-41ec-a483-4e784cb7d2c4
+# ╠═3f3f580c-8a18-430d-b785-4a0efa354188
+# ╠═73a569ee-c503-4940-a30c-d36c9da949f2
+# ╠═eb120b4f-6a41-4ac1-a47d-07991328b2d6
+# ╠═88a9dcaf-fe3c-465c-835b-20bb50ec3ab3
+# ╠═7c7287c1-d9d3-4a8f-88d5-2ea79f1c29c9
+# ╟─a818f1da-1f66-4e87-9dcb-b04f6962c4e4
+# ╠═6b24db63-f9c4-42eb-b043-5ee61b5b2977
+# ╠═8bca8502-35f9-45dd-84d2-a796e541a53d
+# ╠═0a34ef4f-0a55-4c20-9203-f906b8d8a0fb
+# ╟─a4f246ec-7971-4459-b938-e74f5e76ffc9
+# ╠═7642d73a-b90e-4f9b-ba7e-a714adab8fcc
+# ╟─31e1ccc7-6482-4ca2-8f1d-2de8f11284a8
+# ╟─7cae9a40-f952-412f-832a-aa9a57f99b59
+# ╠═4a989d95-1780-46c6-82f9-d76eaabfa1c1
+# ╠═008c10ef-9f5c-4c94-ade8-e79f94c80209
+# ╠═28e1dd07-3204-460f-bab9-4ae850286408
+# ╠═ce58582f-4c79-4a6f-8e80-fdb4124a8cff
+# ╟─870582a9-b533-42c6-9296-e426d5500a72
+# ╟─9895617a-f3b7-4730-aa4c-03d3f912bf47
+# ╠═7ba68748-87d6-41bc-a7c5-8d2c27bad233
+# ╠═80e9c641-f5dc-42e7-a2ac-19922d5e7e87
+# ╟─d2a2818c-2a2e-4826-b8c3-6c7eb5ea089c
+# ╠═e63e8133-8efd-4729-bdd6-277c7fd7202a
+# ╠═c5885018-b6bc-40ae-b567-6a1d90361ac3
+# ╟─25620edb-e870-4d76-af78-c79ddff86a2c
+# ╠═8739b5b7-b7e2-46f5-83f2-3a3ccee55c8f
+# ╟─e3d65211-6b45-4854-9dab-0c16623363b6
+# ╟─465eb0f9-2b9a-4180-9f15-a99b35aa87f2
+# ╠═396df758-d90a-4c2d-a5c3-53656f672797
+# ╠═11d109d1-4b9c-42cd-b9b9-480c86df9abb
+# ╟─2c9353ae-e194-4b40-a246-b03fbfb34d52
+# ╠═2d3e7171-ba47-4002-b4f2-92773465090b
+# ╠═f31f33a7-144b-4540-a029-2cd8d6398067
+# ╟─37b9c75b-6419-4a4b-bc1c-019519c18ada
+# ╠═7c609e90-ecf6-4621-9934-8bbd347f0ffe
+# ╟─d1a0ae13-2b62-4e12-ad08-bef58b264402
+# ╟─34c612bc-a98f-4214-a9d3-dab01e8ca2b6
+# ╠═1d042e40-bb13-485d-9233-a63addc7850a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
