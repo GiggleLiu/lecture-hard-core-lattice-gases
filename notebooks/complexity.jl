@@ -390,9 +390,19 @@ md"""
 * Nguyen M T, Liu J G, Wurtz J, et al. Quantum optimization with arbitrary connectivity using rydberg atom arrays[J]. PRX Quantum, 2023, 4(1): 010316.
 """
 
+# ╔═╡ 849a0df9-0e9d-472c-9de2-e82843916fd7
+md"""
+Let $C$ be a constraint, and $G=(V, E, \boldsymbol{\delta})$ be a weighted graph, where $V$ is the vertex set, $E$ is the edge set and $\boldsymbol{\delta}=(\delta_1, \delta_2, \ldots, \delta_{|V|})$ are the weights associated with vertices. If the MISs of $G$ encodes this constraint, i.e. the assignment satisfies the $C$ if and only if the corresponding set is a MIS of $G$, $(C, G)$ forms a weighted MIS gadget.
+"""
+
 # ╔═╡ eb38545c-3388-41ec-a483-4e784cb7d2c4
 md"""
 ### NOT gate
+"""
+
+# ╔═╡ 4a23222b-9612-461f-b91b-e9de3146bcc6
+md"""
+Let 
 """
 
 # ╔═╡ 3f3f580c-8a18-430d-b785-4a0efa354188
@@ -402,12 +412,12 @@ locs_not = [(0.0, 0.0), (0.0, 1.0)]
 graph_not = unit_disk_graph(locs_not, 1.1)
 
 # ╔═╡ eb120b4f-6a41-4ac1-a47d-07991328b2d6
-show_graph(graph_not; locs=locs_not)
+show_graph(graph_not; locs=locs_not, texts=fill("", nv(graph_not)))
 
 # ╔═╡ 88a9dcaf-fe3c-465c-835b-20bb50ec3ab3
 let
 	configs = solve(IndependentSet(graph_not), ConfigsMax())[]
-	show_gallery(graph_not, (1, 2); locs=locs_not, vertex_configs=configs.c)
+	show_gallery(graph_not, (1, 2); locs=locs_not, vertex_configs=configs.c, texts=fill("", nv(graph_not)))
 end
 
 # ╔═╡ 7c7287c1-d9d3-4a8f-88d5-2ea79f1c29c9
@@ -453,10 +463,26 @@ md"""
 # Composibility of logic gates
 """
 
-# ╔═╡ 4a989d95-1780-46c6-82f9-d76eaabfa1c1
+# ╔═╡ a1effcfc-a22c-4e45-a9c6-e56e07601c9a
+md"""
+The weighted MIS reduction scheme is rooted on the fact that weighted gadgets are composible.
+By adding up energy terms, the ground state of the composed model encodes the solution to the constraint satisfiability problem that all clauses are satisfied.
+For any two weighted MIS gadgets $(C_1, G_1)$ and $(C_2, G_2)$, we have
+```math
+\begin{equation}
+\begin{split}
+    &\texttt{compose}:((C_1, G_1), (C_2, G_2)) \mapsto (C_1\land C_2, G_1 + G_2),\\
+    &G_1 + G_2 = (V_1 \cup V_2, E_1\cup E_2, \delta:v\mapsto (\delta_1)_v+(\delta_2)_{v}),
+\end{split}
+\end{equation}
+```
+where the weight of a vertex in the new graph is a summation of the weights of this vertex in $G_1$ and $G_2$. $\land$ is the logical-and operator, which returns true if constraints on both sides are satisfied. If vertex $v$ is absent in $G_k$, $(\delta_k)_v$ returns zero.
+"""
+
+# ╔═╡ aaa25944-2092-40fe-a696-32d2ccdb7e7b
 locs_or = [(0.0, -0.8), (-0.5, 0.0), (0.5, 0.0), (-0.5, 1.0), (0.5, 1.0), (1.5, 0.0)]
 
-# ╔═╡ 008c10ef-9f5c-4c94-ade8-e79f94c80209
+# ╔═╡ 3819cf9e-9ee2-47f2-8566-d6a4cf93aef9
 graph_or = unit_disk_graph(locs_or, 1.1)
 
 # ╔═╡ 28e1dd07-3204-460f-bab9-4ae850286408
@@ -474,6 +500,21 @@ x_6 = x_1 \lor x_5
 
 # ╔═╡ 9895617a-f3b7-4730-aa4c-03d3f912bf47
 md"# Solving the integer factoring problem"
+
+# ╔═╡ 8144321f-04ba-494b-8b36-b55f3085b18d
+md"""
+The integer factoring problem is a mathematical problem that involves finding the prime factors of a given composite integer. Given a composite number $N$, the task is to determine its prime factors, which are the prime numbers that multiply together to give $N$.
+
+RSA encryption relies on the assumption that factoring large composite numbers is difficult. The RSA algorithm uses the product of two large prime numbers as the public key, while the private key involves the knowledge of the prime factors.
+"""
+
+# ╔═╡ 54421083-e453-437f-a4bf-8515d31f387b
+md"### Array multiplier"
+
+# ╔═╡ a3a8ff76-b16e-4180-b8e4-79c738f84473
+md"""
+![](https://i.stack.imgur.com/OLBvP.png)
+"""
 
 # ╔═╡ 80e9c641-f5dc-42e7-a2ac-19922d5e7e87
 let
@@ -610,7 +651,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 [compat]
 GenericTensorNetworks = "~1.3.4"
 PlutoUI = "~0.7.52"
-TensorInference = "~0.2.0"
+TensorInference = "~0.2.1"
 UnitDiskMapping = "~0.3.1"
 WGLMakie = "~0.8.11"
 """
@@ -621,7 +662,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "4f1161b5c286e72e2faf5a4ce382df8673d247be"
+project_hash = "9ed3fd09b27a26de5905e823f4070bdf9f54152b"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2171,9 +2212,9 @@ version = "1.10.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "7beb031cf8145577fbccacd94b8a8f4ce78428d3"
+git-tree-sha1 = "e2cfc4012a19088254b3950b85c3c1d8882d864d"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.3.0"
+version = "2.3.1"
 weakdeps = ["ChainRulesCore"]
 
     [deps.SpecialFunctions.extensions]
@@ -2287,10 +2328,10 @@ uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 version = "0.1.1"
 
 [[deps.TensorInference]]
-deps = ["Artifacts", "CUDA", "DocStringExtensions", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
-git-tree-sha1 = "bfbeced458b87c6434a78465a1b52caaa90601b4"
+deps = ["Artifacts", "CUDA", "DocStringExtensions", "GenericTensorNetworks", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
+git-tree-sha1 = "dd8977d7b305ee13fbc882571fe791ab364d7477"
 uuid = "c2297e78-99bd-40ad-871d-f50e56b81012"
-version = "0.2.0"
+version = "0.2.1"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
@@ -2614,7 +2655,9 @@ version = "3.5.0+0"
 # ╠═79a65e23-8df1-47dc-b363-b4914fedd738
 # ╟─05351dea-2443-41a0-b7f6-e27ee05fb50f
 # ╟─4e9a32bd-e275-4056-ae43-d3b2bc3cbb63
+# ╟─849a0df9-0e9d-472c-9de2-e82843916fd7
 # ╟─eb38545c-3388-41ec-a483-4e784cb7d2c4
+# ╠═4a23222b-9612-461f-b91b-e9de3146bcc6
 # ╠═3f3f580c-8a18-430d-b785-4a0efa354188
 # ╠═73a569ee-c503-4940-a30c-d36c9da949f2
 # ╠═eb120b4f-6a41-4ac1-a47d-07991328b2d6
@@ -2628,12 +2671,16 @@ version = "3.5.0+0"
 # ╠═7642d73a-b90e-4f9b-ba7e-a714adab8fcc
 # ╟─31e1ccc7-6482-4ca2-8f1d-2de8f11284a8
 # ╟─7cae9a40-f952-412f-832a-aa9a57f99b59
-# ╠═4a989d95-1780-46c6-82f9-d76eaabfa1c1
-# ╠═008c10ef-9f5c-4c94-ade8-e79f94c80209
+# ╟─a1effcfc-a22c-4e45-a9c6-e56e07601c9a
+# ╠═aaa25944-2092-40fe-a696-32d2ccdb7e7b
+# ╠═3819cf9e-9ee2-47f2-8566-d6a4cf93aef9
 # ╠═28e1dd07-3204-460f-bab9-4ae850286408
 # ╠═ce58582f-4c79-4a6f-8e80-fdb4124a8cff
 # ╟─870582a9-b533-42c6-9296-e426d5500a72
 # ╟─9895617a-f3b7-4730-aa4c-03d3f912bf47
+# ╟─8144321f-04ba-494b-8b36-b55f3085b18d
+# ╟─54421083-e453-437f-a4bf-8515d31f387b
+# ╟─a3a8ff76-b16e-4180-b8e4-79c738f84473
 # ╠═7ba68748-87d6-41bc-a7c5-8d2c27bad233
 # ╠═80e9c641-f5dc-42e7-a2ac-19922d5e7e87
 # ╟─d2a2818c-2a2e-4826-b8c3-6c7eb5ea089c
