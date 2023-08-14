@@ -111,9 +111,12 @@ a, b = (1, 0), (0.5, 0.5*sqrt(3))
 # ╔═╡ b587036b-2043-4774-a19a-e5f9835337e9
 Na, Nb = 10, 10
 
+# ╔═╡ 880dcb1f-a251-4df7-a312-9e4c23e542d6
+filling_factor = 1.0
+
 # ╔═╡ 4386bbc2-57fd-4d04-b9f9-c7f7ff006450
 # triangle lattice site locations
-sites = [a .* i .+ b .* j for i=1:Na, j=1:Nb]
+sites = [a .* i .+ b .* j for i=1:Na, j=1:Nb][rand(Na * Nb) .< filling_factor]
 
 # ╔═╡ 880d132c-1f10-4eb5-a1b7-d7b9ed74b5f9
 md"""
@@ -2559,6 +2562,7 @@ version = "3.5.0+0"
 # ╟─b5c566f4-cfc4-4600-90a0-8be7fa5f86d4
 # ╠═e8e5e413-a89f-4776-bc46-60806ae3d2d2
 # ╠═b587036b-2043-4774-a19a-e5f9835337e9
+# ╠═880dcb1f-a251-4df7-a312-9e4c23e542d6
 # ╠═4386bbc2-57fd-4d04-b9f9-c7f7ff006450
 # ╟─880d132c-1f10-4eb5-a1b7-d7b9ed74b5f9
 # ╠═3a27f87d-6c94-4329-8033-41834cc41612
