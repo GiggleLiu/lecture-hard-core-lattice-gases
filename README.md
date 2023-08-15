@@ -1,6 +1,5 @@
-This repository contains my lectures notebooks for [2023年多体计算方法讲习班（理论物理专款科技活动项目）](http://2023mbcc.cpsjournals.cn/).
-
-It covers the following topics about hard-core lattice gases.
+# Lectures on Hard-Core Lattice Gases
+This repository contains my lectures notebooks for [2023年多体计算方法讲习班（理论物理专款科技活动项目）](http://2023mbcc.cpsjournals.cn/), which covers the following topics.
 
 1. Hard core lattice gases and tensor networks
 2. Solution space properties of hard-core lattice gases
