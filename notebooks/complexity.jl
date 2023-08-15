@@ -168,7 +168,7 @@ md"""
 """
 
 # ╔═╡ 22926001-97f0-4ed4-8c00-b5796990dccf
-md"Before doing any computation, please check the time, space and read-write complexity. The return values are log2 values of the number of operations."
+md"One can check the time, space and read-write complexity. The return values are log2 values of the number of operations."
 
 # ╔═╡ 3164fe9e-8746-4e04-b424-9c2f71799e86
 timespacereadwrite_complexity(problem)
@@ -293,24 +293,11 @@ We need to convert a combinatorial optimization problem instance in `GenericTens
 For simplicity, this conversion recomputes the contraction order. The reference of `TensorInference` will come out soon, if I forgot to update, please write an email to [jinguoliu@hkust-gz.edu.cn](mailto:jinguoliu@hkust-gz.edu.cn).
 """
 
-# ╔═╡ e2c8848d-8a0e-44df-9600-7edceb9ca170
-# convert a combinatorial optimization problem to a probabilistic model
-function probabilistic_model(problem::GraphProblem, β::Real; evidence::Dict=Dict{Int,Int}(), optimizer=GreedyMethod(nrepeat=1))
-	lbs = labels(problem)
-	nflavors = length(flavors(problem))
-	# generate tensors for x = e^β
-	tensors = [[ones(nflavors) for i=1:length(lbs)]..., GenericTensorNetworks.generate_tensors(exp(β), problem)...]
-	ixs = GenericTensorNetworks.getixsv(problem.code)
-	iy = GenericTensorNetworks.getiyv(problem.code)
-	rawcode = GenericTensorNetworks.OMEinsum.DynamicEinCode([[[l] for l in lbs]..., ixs...], iy)
-	TensorNetworkModel(lbs, rawcode, tensors; evidence, optimizer, simplifier = nothing)
-end
-
 # ╔═╡ f9c4c094-dd56-4dbf-9a41-35cf6fa73115
 @bind β Slider(0:0.1:10; default=3.0)
 
 # ╔═╡ 3a7bd7bd-2dbb-4f14-9788-06b403d18683
-pmodel = probabilistic_model(problem, β)
+pmodel = TensorNetworkModel(problem, β)
 
 # ╔═╡ f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
 md"""
@@ -328,7 +315,7 @@ function sample_sets(problem, βs, nsample)
 	n = solve(problem, SizeMax())[].n
 	pss = Vector{Int}[]
 	for β in βs
-		pmodel = probabilistic_model(problem, β)
+		pmodel = TensorNetworkModel(problem, β)
 		ns = dropdims(sum(sample(pmodel, nsample); dims=1); dims=1)
 		push!(pss, [count(==(i), ns) for i=0:n])
 	end
@@ -337,7 +324,7 @@ end
 
 # ╔═╡ 6f704bbe-0bf6-4371-8777-e05a621138e5
 for β = 1:3
-	pmodel = probabilistic_model(problem, β)
+	pmodel = TensorNetworkModel(problem, β)
 	ns = dropdims(sum(sample(pmodel, 10); dims=1); dims=1)
 	ps = [count(==(i), ns) for i=0:bestconfig.n]
 	barplot(ps)
@@ -376,7 +363,7 @@ most_probable_config(pmodel)
 
 # ╔═╡ 79a65e23-8df1-47dc-b363-b4914fedd738
 let
-	pmodel = probabilistic_model(problem, β; evidence=Dict(1=>0))
+	pmodel = TensorNetworkModel(problem, β; evidence=Dict(1=>0))
 	most_probable_config(pmodel)
 end
 
@@ -2638,7 +2625,6 @@ version = "3.5.0+0"
 # ╟─f32202e1-5964-4fa6-8aa1-6dd2cc17d17f
 # ╠═e0467b35-0ffc-4589-8483-3e520bab8f4a
 # ╟─ec351d92-6508-408d-b1df-1ae574d5fc0f
-# ╠═e2c8848d-8a0e-44df-9600-7edceb9ca170
 # ╠═f9c4c094-dd56-4dbf-9a41-35cf6fa73115
 # ╠═3a7bd7bd-2dbb-4f14-9788-06b403d18683
 # ╟─f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
