@@ -77,6 +77,34 @@ function compare_configs(locs, graph, config1, config2)
 	show_graph(graph; locs, texts=fill("", nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
 end
 
+# ╔═╡ fc29e819-2304-4ba3-8378-00fe0c3241ce
+md"""
+# Road to mastering machine learning
+
+## Machine learning for physicists
+Github: [wangleiphy/ml4p](https://github.com/wangleiphy/ml4p)
+"""
+
+# ╔═╡ ec6e5221-aa42-4626-b4db-5fa802f7e4b7
+md"""![](https://private-user-images.githubusercontent.com/6257240/260547779-f9674eed-7c95-4891-84a0-330fd5a192f3.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE2OTIwNDAyNzUsIm5iZiI6MTY5MjAzOTk3NSwicGF0aCI6Ii82MjU3MjQwLzI2MDU0Nzc3OS1mOTY3NGVlZC03Yzk1LTQ4OTEtODRhMC0zMzBmZDVhMTkyZjMucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMDgxNCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzA4MTRUMTkwNjE1WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9OTQwZGQyNzU1YmNlMjYxZWQ4MWYzZWVkZDE4YzdjZGNiOTU1YzU0NGJiZTQ0ZWNkZDVhNTA3OTY4M2I5ZTIwMyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.E_oPiT7u8SICGLuOypXmzHGKJkjtkLKDultkNUv2B64)
+"""
+
+# ╔═╡ f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
+md"## The book that I enjoyed reading"
+
+# ╔═╡ 0f5e3e30-2496-480f-b882-1e5d500ea575
+html"""
+<img src="https://private-user-images.githubusercontent.com/6257240/260548403-a81e3f3f-baac-4783-abf2-645419b95281.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE2OTIwNDAzOTgsIm5iZiI6MTY5MjA0MDA5OCwicGF0aCI6Ii82MjU3MjQwLzI2MDU0ODQwMy1hODFlM2YzZi1iYWFjLTQ3ODMtYWJmMi02NDU0MTliOTUyODEucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMDgxNCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzA4MTRUMTkwODE4WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmEzYmU2YzU2NWMzMWM5M2JkYTRhYjE5M2ZmMDk4NTk2NjUwNGFlNGIxNDcwM2E1MjViNDkxNWY2ZTA4NGRlOCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.-PjHQREjQ2v0SxOhoC3jFHSa2p0oId6NlsbZFmxvAJA" width=300>
+"""
+
+# ╔═╡ 7798a5ee-3eb2-4006-99fd-71365228a830
+md"## Online lecture: CS231n"
+
+# ╔═╡ 3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
+html"""
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vT1JzLTH4G4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+"""
+
 # ╔═╡ 75837e42-6cdc-48c3-9568-639ccb48253f
 md"# Why ground state finding of a many body system is difficult?"
 
@@ -141,6 +169,14 @@ E(\mathbf{n}) = -\sum_{i \in V}w_i n_i + \infty \sum_{(i, j) \in E} n_i n_j
 where $n_i \in \{0, 1\}$ is the number of particles at site $i$, and $w_i$ is the weight associated with it. For unweighted graphs, the weights are uniform.
 """
 
+# ╔═╡ c774f1f6-741e-4529-b40a-333b80229f95
+md"""
+- **Q1:** How many atoms we can fit into this lattice?
+- **Q2:** Let us denote the maximum number of particles be $G$, how many such configurations can we find?
+- **Q3:** How many configurations have size $\alpha(G)-1$ (with $1$ defect)? Can they be related by "swap" operations?
+- **Q4:** How does the energy landscape look like?
+"""
+
 # ╔═╡ 4828777e-9a9f-4e38-bac3-3bad5849a59b
 md"""
 # Solution Space Properties
@@ -167,7 +203,7 @@ problem = IndependentSet(graph; optimizer=GreedyMethod())
 # ╔═╡ a5308f72-846c-4429-b80f-c39339a32e0f
 md"""
 !!! note
-	Explain the tensor network structure on the blackboard. If we have time, I will explain the tensor contraction order finding algorithms.
+	Explain the [tensor network structure for hard-core lattice gases](https://queracomputing.github.io/GenericTensorNetworks.jl/dev/generated/IndependentSet/) on the blackboard. If we have time, I will explain the tensor contraction order finding algorithms.
 """
 
 # ╔═╡ 22926001-97f0-4ed4-8c00-b5796990dccf
@@ -650,13 +686,6 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 TensorInference = "c2297e78-99bd-40ad-871d-f50e56b81012"
 UnitDiskMapping = "1b61a8d9-79ed-4491-8266-ef37f39e1727"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
-
-[compat]
-GenericTensorNetworks = "~1.3.4"
-PlutoUI = "~0.7.52"
-TensorInference = "~0.2.1"
-UnitDiskMapping = "~0.3.1"
-WGLMakie = "~0.8.11"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -665,7 +694,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "9ed3fd09b27a26de5905e823f4070bdf9f54152b"
+project_hash = "cda052551181634ef00c2cdbe4f07f55caac24cf"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2215,9 +2244,9 @@ version = "1.10.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "e2cfc4012a19088254b3950b85c3c1d8882d864d"
+git-tree-sha1 = "7beb031cf8145577fbccacd94b8a8f4ce78428d3"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.3.1"
+version = "2.3.0"
 weakdeps = ["ChainRulesCore"]
 
     [deps.SpecialFunctions.extensions]
@@ -2331,10 +2360,10 @@ uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 version = "0.1.1"
 
 [[deps.TensorInference]]
-deps = ["Artifacts", "CUDA", "DocStringExtensions", "GenericTensorNetworks", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
-git-tree-sha1 = "dd8977d7b305ee13fbc882571fe791ab364d7477"
+deps = ["Artifacts", "CUDA", "DocStringExtensions", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
+git-tree-sha1 = "bfbeced458b87c6434a78465a1b52caaa90601b4"
 uuid = "c2297e78-99bd-40ad-871d-f50e56b81012"
-version = "0.2.1"
+version = "0.2.0"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
@@ -2596,6 +2625,12 @@ version = "3.5.0+0"
 # ╠═877f87b9-59e4-4577-897c-eef44aa6e2eb
 # ╠═0f2c3023-262e-4afb-bf06-a8e8422f7339
 # ╠═541dd885-fc34-48d3-a71f-b1e4f8b8d41a
+# ╟─fc29e819-2304-4ba3-8378-00fe0c3241ce
+# ╟─ec6e5221-aa42-4626-b4db-5fa802f7e4b7
+# ╟─f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
+# ╟─0f5e3e30-2496-480f-b882-1e5d500ea575
+# ╟─7798a5ee-3eb2-4006-99fd-71365228a830
+# ╟─3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
 # ╟─75837e42-6cdc-48c3-9568-639ccb48253f
 # ╟─fb341231-b682-4abc-a9d6-99e5ab54cd0e
 # ╟─2d649ed5-21f3-4486-9bc6-15532218d30f
@@ -2610,6 +2645,7 @@ version = "3.5.0+0"
 # ╠═f0bff7ba-5d70-4d50-9a9a-903af4f32763
 # ╠═7e18a38e-bc88-43a2-a996-c14892597708
 # ╟─9d00d7ae-df2e-4f69-894d-cf588a4823fc
+# ╟─c774f1f6-741e-4529-b40a-333b80229f95
 # ╟─4828777e-9a9f-4e38-bac3-3bad5849a59b
 # ╟─9c1119f9-1bd6-434c-8faa-97470138449d
 # ╟─617f67a7-f734-40b0-b452-60f8bcaae9eb
