@@ -32,28 +32,6 @@ using UnitDiskMapping
 # ╔═╡ c662789f-19d1-4b75-ab95-dbe12c11330d
 TableOfContents()
 
-# ╔═╡ e1a91e60-ef9e-4e71-b458-16be6920881c
-empty_theme = Theme(
-    Axis = (
-        backgroundcolor = :transparent,
-        leftspinevisible = false,
-        rightspinevisible = false,
-        bottomspinevisible = false,
-        topspinevisible = false,
-        xticklabelsvisible = false, 
-        yticklabelsvisible = false,
-        xgridcolor = :transparent,
-        ygridcolor = :transparent,
-        xminorticksvisible = false,
-        yminorticksvisible = false,
-        xticksvisible = false,
-        yticksvisible = false,
-        xautolimitmargin = (0.05,0.05),
-        yautolimitmargin = (0.05,0.05),
-		autolimitaspect=1
-    )
-)
-
 # ╔═╡ 877f87b9-59e4-4577-897c-eef44aa6e2eb
 plot_theme = Theme(
     Axis = (
@@ -94,7 +72,7 @@ md"## The book that I enjoyed reading"
 
 # ╔═╡ 0f5e3e30-2496-480f-b882-1e5d500ea575
 html"""
-<img src="https://private-user-images.githubusercontent.com/6257240/260548403-a81e3f3f-baac-4783-abf2-645419b95281.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE2OTIwNDAzOTgsIm5iZiI6MTY5MjA0MDA5OCwicGF0aCI6Ii82MjU3MjQwLzI2MDU0ODQwMy1hODFlM2YzZi1iYWFjLTQ3ODMtYWJmMi02NDU0MTliOTUyODEucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMDgxNCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzA4MTRUMTkwODE4WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmEzYmU2YzU2NWMzMWM5M2JkYTRhYjE5M2ZmMDk4NTk2NjUwNGFlNGIxNDcwM2E1MjViNDkxNWY2ZTA4NGRlOCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.-PjHQREjQ2v0SxOhoC3jFHSa2p0oId6NlsbZFmxvAJA" width=300>
+<img src="https://private-user-images.githubusercontent.com/6257240/260548403-a81e3f3f-baac-4783-abf2-645419b95281.png" width=300>
 """
 
 # ╔═╡ 7798a5ee-3eb2-4006-99fd-71365228a830
@@ -2608,14 +2586,13 @@ version = "3.5.0+0"
 # ╔═╡ Cell order:
 # ╠═c7417c94-3903-11ee-1ff1-89b2f3eb8673
 # ╠═c662789f-19d1-4b75-ab95-dbe12c11330d
-# ╠═e1a91e60-ef9e-4e71-b458-16be6920881c
 # ╠═877f87b9-59e4-4577-897c-eef44aa6e2eb
 # ╠═0f2c3023-262e-4afb-bf06-a8e8422f7339
 # ╠═541dd885-fc34-48d3-a71f-b1e4f8b8d41a
 # ╟─fc29e819-2304-4ba3-8378-00fe0c3241ce
 # ╟─ec6e5221-aa42-4626-b4db-5fa802f7e4b7
 # ╟─f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
-# ╟─0f5e3e30-2496-480f-b882-1e5d500ea575
+# ╠═0f5e3e30-2496-480f-b882-1e5d500ea575
 # ╟─7798a5ee-3eb2-4006-99fd-71365228a830
 # ╟─3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
 # ╟─75837e42-6cdc-48c3-9568-639ccb48253f
