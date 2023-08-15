@@ -20,7 +20,7 @@ begin
 	# `show_graph` and `show_gallery` are for visualizing graphs
 	using GenericTensorNetworks.LuxorGraphPlot: show_graph, show_gallery
 	# Graphs is a package for graph operations
-	using GenericTensorNetworks.Graphs: nv, SimpleGraph, has_edge, add_edge!
+	import GenericTensorNetworks.Graphs
 end
 
 # ╔═╡ e0467b35-0ffc-4589-8483-3e520bab8f4a
@@ -40,31 +40,31 @@ plot_theme = Theme(
 		xticklabelsize=20,
 		yticklabelsize=20,
     )
-)
+);
 
 # ╔═╡ 0f2c3023-262e-4afb-bf06-a8e8422f7339
 # utility for showing a configuration
 function show_config(locs, graph, config)
-	show_graph(graph; locs, texts=fill("", nv(graph)), vertex_colors=[x == 1 ? "red" : "white" for x in config])
+	show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[x == 1 ? "red" : "white" for x in config])
 end
 
 # ╔═╡ 541dd885-fc34-48d3-a71f-b1e4f8b8d41a
 # utility for comparing two configurations
 function compare_configs(locs, graph, config1, config2)
 	colormap = Dict((0, 0)=>"white", (0, 1)=>"blue", (1, 0)=>"red", (1, 1)=>"purple")
-	show_graph(graph; locs, texts=fill("", nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
+	show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
 end
 
 # ╔═╡ fc29e819-2304-4ba3-8378-00fe0c3241ce
 md"""
-# Road to mastering machine learning
-
+# Irrelevant: Road to mastering machine learning
+This lecture is supposed to be delivered by Lei. He wanted to lecture about machine learning. If you are interesting in learning machine learning for physicists, please check the following repo and books.
 ## Machine learning for physicists
 Github: [wangleiphy/ml4p](https://github.com/wangleiphy/ml4p)
 """
 
 # ╔═╡ ec6e5221-aa42-4626-b4db-5fa802f7e4b7
-md"""![](https://private-user-images.githubusercontent.com/6257240/260547779-f9674eed-7c95-4891-84a0-330fd5a192f3.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE2OTIwNDAyNzUsIm5iZiI6MTY5MjAzOTk3NSwicGF0aCI6Ii82MjU3MjQwLzI2MDU0Nzc3OS1mOTY3NGVlZC03Yzk1LTQ4OTEtODRhMC0zMzBmZDVhMTkyZjMucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMDgxNCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzA4MTRUMTkwNjE1WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9OTQwZGQyNzU1YmNlMjYxZWQ4MWYzZWVkZDE4YzdjZGNiOTU1YzU0NGJiZTQ0ZWNkZDVhNTA3OTY4M2I5ZTIwMyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.E_oPiT7u8SICGLuOypXmzHGKJkjtkLKDultkNUv2B64)
+md"""![](https://user-images.githubusercontent.com/6257240/260753478-f4960c86-65f0-4d71-a264-1a7f47b0b3b7.png)
 """
 
 # ╔═╡ f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
@@ -72,7 +72,7 @@ md"## The book that I enjoyed reading"
 
 # ╔═╡ 0f5e3e30-2496-480f-b882-1e5d500ea575
 html"""
-<img src="https://private-user-images.githubusercontent.com/6257240/260548403-a81e3f3f-baac-4783-abf2-645419b95281.png" width=300>
+<img src="https://user-images.githubusercontent.com/6257240/260753742-e1146b86-7876-4f80-93cd-7242aa518815.png" width=300>
 """
 
 # ╔═╡ 7798a5ee-3eb2-4006-99fd-71365228a830
@@ -86,8 +86,17 @@ html"""
 # ╔═╡ 75837e42-6cdc-48c3-9568-639ccb48253f
 md"# Why ground state finding of a many body system is difficult?"
 
+# ╔═╡ c1de542e-8d75-4eaa-a38e-36473839961a
+md"""
+1. Defining hard-core lattice gases.
+2. The solution space properties of hard-core lattice gases.
+3. The finite temperature statistics of hard-core lattice gases.
+4. Given a hard-core lattice gas ground state solving oracle, the integer factoring problem can be solved efficiently. 
+5. If we have time, I will show how to solve the challenge problem.
+"""
+
 # ╔═╡ fb341231-b682-4abc-a9d6-99e5ab54cd0e
-md"# Hard Core Lattice Gas"
+md"# Hard Core Lattice Gas - A Thorough Guide"
 
 # ╔═╡ 2d649ed5-21f3-4486-9bc6-15532218d30f
 md"""
@@ -147,17 +156,17 @@ E(\mathbf{n}) = -\sum_{i \in V}w_i n_i + \infty \sum_{(i, j) \in E} n_i n_j
 where $n_i \in \{0, 1\}$ is the number of particles at site $i$, and $w_i$ is the weight associated with it. For unweighted graphs, the weights are uniform.
 """
 
+# ╔═╡ 4828777e-9a9f-4e38-bac3-3bad5849a59b
+md"""
+# Solution Space Properties
+"""
+
 # ╔═╡ c774f1f6-741e-4529-b40a-333b80229f95
 md"""
 - **Q1:** How many atoms we can fit into this lattice?
 - **Q2:** Let us denote the maximum number of particles be $G$, how many such configurations can we find?
 - **Q3:** How many configurations have size $\alpha(G)-1$ (with $1$ defect)? Can they be related by "swap" operations?
 - **Q4:** How does the energy landscape look like?
-"""
-
-# ╔═╡ 4828777e-9a9f-4e38-bac3-3bad5849a59b
-md"""
-# Solution Space Properties
 """
 
 # ╔═╡ 9c1119f9-1bd6-434c-8faa-97470138449d
@@ -192,7 +201,7 @@ timespacereadwrite_complexity(problem)
 
 # ╔═╡ 67b1ff04-ecea-45eb-8c9f-58036b89a478
 md"""
-### Finding a best solution
+## The best solution
 A standard task of a combinatorial a optimization problem is to get one of the best solutions. `GenericTensorNetworks` provides a unified interface for solution space property solving `solve(problem, property)`. The resulting value is always a tensor, its rank is equal to the number of open indices. Since we do not have open vertices in our demo problem, the return value is a rank-0 tensor.
 """
 
@@ -210,20 +219,23 @@ If one is only interested in finding the maximum solution size, the `SizeMax` pr
 # ╔═╡ ed163991-60e3-4978-b816-67d968b69312
 maximum_size = solve(problem, SizeMax())[]
 
-# ╔═╡ 8713bbef-136e-4b7a-a89f-181b70768481
+# ╔═╡ f602c846-2a53-4475-b9ba-05b14376d00d
 md"""
-### Computing the partition function
-```math
-Z = \sum_{\mathbf{n}} e^{-\beta E({\mathbf{n}})},
-```
-where the summation runs over all $2^{|V|}$ configurations of $\mathbf{n}$.
+If one is also interested in knowing how many best solutions are there, they should use `CountingMax` property.
 """
 
-# ╔═╡ 5fb3b68c-2bac-4a44-b7fd-b00524e092df
-Z = solve(problem, PartitionFunction(-2.0))[]
+# ╔═╡ 6d7a2811-44e7-479f-92f9-9364da9962fe
+solve(problem, CountingMax())[]
 
-# ╔═╡ 36a35136-a9ab-42c6-a9e1-1caac9869e17
-md"# Solution Space"
+# ╔═╡ 3302ab31-e9ee-425c-9aa1-3235f3fa680b
+md"""
+There is no degeneracy.
+"""
+
+# ╔═╡ db36f846-caf8-42cd-b6b3-4471532ae2ba
+md"""
+## Solution space visualization
+"""
 
 # ╔═╡ 3582dadd-ff87-4422-8f57-350be309858c
 max2configs = solve(problem, ConfigsMax(2; tree_storage=true))[]
@@ -234,12 +246,15 @@ suboptimal = collect(max2configs[1].coeffs[1])
 # ╔═╡ f044457b-bd98-44fe-bd23-5b7483b04a36
 optimal = collect(max2configs[1].coeffs[2])
 
+# ╔═╡ f5c33702-40be-4781-ad11-6d4d7d0a8106
+md"In the following, we visualize the solution space spaned by states with optimal and suboptimal energies."
+
 # ╔═╡ 8c34ffbd-b81e-403b-85b8-68f4958ee5b1
 function connected_by_swap_on_edge(v, w, graph)
 	diff = v ⊻ w
 	count_ones(diff) != 2 && return false
 	i, j = findall(==(1), diff)
-	return has_edge(graph, i, j)
+	return Graphs.has_edge(graph, i, j)
 end
 
 # ╔═╡ 386710de-c7d7-469a-8c11-bfb9b2780993
@@ -251,23 +266,20 @@ end
 # ╔═╡ 5367fd98-3c7b-4ebc-8b63-10450e867626
 config_graph = let
 	vertices = [suboptimal..., optimal...]
-	config_graph = SimpleGraph(length(vertices))
+	config_graph = Graphs.SimpleGraph(length(vertices))
 	for (i, v) in enumerate(vertices), (j, w) in enumerate(vertices)
 		if connected_by_swap_on_edge(v, w, graph) || connected_by_flip(v, w, graph)
-			add_edge!(config_graph, i, j)
+			Graphs.add_edge!(config_graph, i, j)
 		end
 	end
 	config_graph
 end
 
-# ╔═╡ befebc4f-e87a-4148-978e-872a1954191f
-[connected_by_swap_on_edge(suboptimal[2], suboptimal[j], graph) for j=1:100]
-
 # ╔═╡ 3e0b902c-a004-45bd-b80b-caf20976db63
 compare_configs(sites, graph, suboptimal[2], suboptimal[3])
 
 # ╔═╡ 5669cbb3-adc4-4510-99fb-f23b379c9f79
-show_graph(config_graph, vertex_colors = [fill("black", length(suboptimal))..., fill("red", length(optimal))...], texts=fill("", nv(config_graph)), vertex_size=0.1)
+show_graph(config_graph, vertex_colors = [fill("black", length(suboptimal))..., fill("red", length(optimal))...], texts=fill("", Graphs.nv(config_graph)), vertex_size=0.1)
 
 # ╔═╡ 6279b321-6c49-47df-9839-2ca5606d1a55
 md"""
@@ -286,8 +298,27 @@ let
 	barplot(0:length(distri)-1, distri)
 end
 
+# ╔═╡ e3c6d44e-2d7c-4fba-bf80-f320c7b6af9a
+md"""
+## Independence polynomial
+"""
+
+# ╔═╡ 681fe137-c4da-4a30-bb50-90b83b6930c8
+md"""
+The math behind the library is related to the independence polynomial. The coefficients of an independence polynomial is the number of independent sets with different sizes.
+```math
+I(G, x) = \sum_{k=0}^{\alpha(G)} a_k x^k,
+```
+where ``\alpha(G)`` is the maximum independent set size, 
+``a_k`` is the number of independent sets of size ``k``.
+The total number of independent sets is thus equal to ``I(G, 1)``.
+"""
+
+# ╔═╡ 17ccecf8-8809-4d24-8943-fa9feed1b975
+poly = solve(problem, GraphPolynomial())[]
+
 # ╔═╡ 9840ef13-ac5d-4d46-b3df-31892028ba98
-md"# Probabilistic Modeling"
+md"# Statistical properties"
 
 # ╔═╡ f32202e1-5964-4fa6-8aa1-6dd2cc17d17f
 md"""
@@ -316,13 +347,35 @@ For simplicity, this conversion recomputes the contraction order. The reference 
 # ╔═╡ 3a7bd7bd-2dbb-4f14-9788-06b403d18683
 pmodel = TensorNetworkModel(problem, β)
 
+# ╔═╡ 8713bbef-136e-4b7a-a89f-181b70768481
+md"""
+## The partition function
+```math
+Z = \sum_{\mathbf{n}} e^{-\beta E({\mathbf{n}})},
+```
+where the summation runs over all $2^{|V|}$ configurations of $\mathbf{n}$.
+"""
+
+# ╔═╡ 5fb3b68c-2bac-4a44-b7fd-b00524e092df
+Z = solve(problem, PartitionFunction(-2.0))[]
+
 # ╔═╡ f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
 md"""
 ## Marginal probabilities
 """
 
+# ╔═╡ 858965b4-4418-46bb-8683-5d58c64ce56d
+md"""
+The marginal probability tells how likely a site is occupied by a particle.
+"""
+
 # ╔═╡ 5769a5d9-bc01-468b-acd0-a419a0405115
 mars = marginals(pmodel)
+
+# ╔═╡ fb982482-b419-4935-8cc1-6f01117a4420
+md"""
+## Sampling from thermal equilibrium
+"""
 
 # ╔═╡ 79bfb975-8e6b-4c9e-a7c6-142ee7aa9781
 sample(pmodel, 10)
@@ -339,21 +392,6 @@ function sample_sets(problem, βs, nsample)
 	return pss
 end
 
-# ╔═╡ 6f704bbe-0bf6-4371-8777-e05a621138e5
-for β = 1:3
-	pmodel = TensorNetworkModel(problem, β)
-	ns = dropdims(sum(sample(pmodel, 10); dims=1); dims=1)
-	ps = [count(==(i), ns) for i=0:bestconfig.n]
-	barplot(ps)
-	yield()
-end
-
-# ╔═╡ 22fac8cc-796c-4ef7-8f95-02baa34712ab
-show_graph(graph; locs=sites, vertex_colors=[(1-b, 1-b, 1-b) for b in getindex.(mars, 2)], texts=fill("", nv(graph)))
-
-# ╔═╡ 17ccecf8-8809-4d24-8943-fa9feed1b975
-poly = solve(problem, GraphPolynomial())[]
-
 # ╔═╡ d0823c1c-93f2-4c77-aebf-2af2077131e4
 samples = sample_sets(problem, 0:2:6, 1000)
 
@@ -367,10 +405,31 @@ with_theme(plot_theme) do
 		log_sample = log.(max.(1, sample))
 		barplot!(ns, log_sample, color=color, opacity=0.4, label="β = $β")
 	end
-	#legend!(["β=1"])
 	axislegend("Samples", position = :lt)
 	fig
 end
+
+# ╔═╡ 22fac8cc-796c-4ef7-8f95-02baa34712ab
+show_graph(graph; locs=sites, vertex_colors=[(1-b, 1-b, 1-b) for b in getindex.(mars, 2)], texts=fill("", Graphs.nv(graph)))
+
+# ╔═╡ 24241b1c-b209-468a-a235-ba22789c9669
+md"""
+## Joint marginal probabilities
+"""
+
+# ╔═╡ 89783585-b6b0-442a-9cbd-0708c9ef70c4
+pmodel2 = TensorNetworkModel(problem, β; mars=[[e.src, e.dst] for e in Graphs.edges(graph)])
+
+# ╔═╡ 2b208db3-bf89-4bc6-8ab5-a831a595f501
+mars2 = marginals(pmodel2);
+
+# ╔═╡ acc5d633-282e-48ef-9cd6-fd52755352b5
+md"""
+Here, we plot the probability that two vertices have the same configuration.
+"""
+
+# ╔═╡ 1f397c58-9c28-4b4c-8883-4ba6bdaf1f45
+show_graph(graph; locs=sites, edge_colors=[(b=mar[1, 1]; (1-b, 1-b, 1-b)) for mar in mars2], texts=fill("", Graphs.nv(graph)), edge_line_width=5)
 
 # ╔═╡ 9047cead-0c1e-48dc-80f3-84ec15ebf799
 md"## Maximum a posterior estimation"
@@ -416,12 +475,12 @@ locs_not = [(0.0, 0.0), (0.0, 1.0)]
 graph_not = unit_disk_graph(locs_not, 1.1)
 
 # ╔═╡ eb120b4f-6a41-4ac1-a47d-07991328b2d6
-show_graph(graph_not; locs=locs_not, texts=fill("", nv(graph_not)))
+show_graph(graph_not; locs=locs_not, texts=fill("", Graphs.nv(graph_not)))
 
 # ╔═╡ 88a9dcaf-fe3c-465c-835b-20bb50ec3ab3
 let
 	configs = solve(IndependentSet(graph_not), ConfigsMax())[]
-	show_gallery(graph_not, (1, 2); locs=locs_not, vertex_configs=configs.c, texts=fill("", nv(graph_not)))
+	show_gallery(graph_not, (1, 2); locs=locs_not, vertex_configs=configs.c, texts=fill("", Graphs.nv(graph_not)))
 end
 
 # ╔═╡ 7c7287c1-d9d3-4a8f-88d5-2ea79f1c29c9
@@ -626,22 +685,82 @@ html"""
 </table>
 """
 
-# ╔═╡ 1d042e40-bb13-485d-9233-a63addc7850a
-# html"""
-# <!-- include the jugsaw library -->
-# <div id="output"></div>
-# <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/Jugsaw/Jugsaw/js/jugsawirparser.js"></script>
+# ╔═╡ 8bbd114b-9535-4255-b5b8-94f0826b707e
+md"""
+# Solving the challenge problem
+"""
 
-# <!-- The function call -->
-# <script>
-# // call
-# const context = new ClientContext({endpoint:"https://giggleliu-helloworld.hf.space"})
-# const app_promise = request_app(context, "helloworld")
-# const output = document.getElementById('output');
-# // keyword arguments are: String[]
-# app_promise.then(app=>app.call("greet", ["Jinguo"], [])).then(x=>output.innerHTML = x)
-# </script>
-# """
+# ╔═╡ d1e4a420-eec2-4ae4-b7b5-4d0c80ec1e10
+function fullerene()
+	φ = (1+√5)/2
+	points = NTuple{3,Float64}[]
+	for (x, y, z) in ((0.0, 1.0, 3φ), (1.0, 2 + φ, 2φ), (φ, 2.0, 2φ + 1.0))
+		for (α, β, γ) in ((x,y,z), (y,z,x), (z,x,y))
+			for loc in ((α,β,γ), (α,β,-γ), (α,-β,γ), (α,-β,-γ), (-α,β,γ), (-α,β,-γ), (-α,-β,γ), (-α,-β,-γ))
+				if loc ∉ points
+					push!(points, loc)
+				end
+			end
+		end
+	end
+	return points
+end
+
+# ╔═╡ 6a7641b2-7b11-4580-8342-3cebe5a70508
+ledges = let
+	points = fullerene()
+	g_c60 = unit_disk_graph(points, sqrt(5))
+	edges = [(e.src, e.dst) for e in Graphs.edges(g_c60)]
+	ne = Graphs.ne(g_c60)
+	[(i, j) for i=1:ne, j=1:ne if j > i && !isempty(edges[i] ∩ edges[j])]
+end
+
+# ╔═╡ 9e79b8c8-7fb4-4724-84d9-ad16dc837c07
+problem_graph = Graphs.SimpleGraph([Graphs.Edge(i, j) for (i, j) in ledges])
+
+# ╔═╡ e3519f26-963b-417d-a5bb-e018de93791c
+sg = SpinGlass(problem_graph; edge_weights=ones(Int, length(ledges)))
+
+# ╔═╡ 93b741b0-46ca-4f06-a210-c9418ac476e5
+sg |> typeof |> fieldnames
+
+# ╔═╡ 9a598b10-2e54-46c8-869f-b7ec1a238152
+contraction_complexity(GenericTensorNetworks.target_problem(sg))
+
+# ╔═╡ 5bda5ef8-62ce-4ae5-859c-4874a779bda6
+solve(sg, SizeMax())
+
+# ╔═╡ d98a49e4-3733-498b-873f-dad6dbf1901b
+solve(sg, CountingMax(); T=Int64)[]
+
+# ╔═╡ bb0009de-8bff-4820-bfd6-d92f17c0a2f8
+solve(sg, GraphPolynomial(; method=:finitefield))[]
+
+# ╔═╡ 022c861e-f457-446e-b7cf-68a96f0da032
+md"""
+We emphasis that the spin-glass problem is reduced to the Max-Cut problem. Since we work on the target problem, the generated samples needs to be extracted.
+"""
+
+# ╔═╡ f55247b1-0493-46cf-a636-16c400b13caf
+GenericTensorNetworks.target_problem(sg)
+
+# ╔═╡ 92a9a7fc-4a9e-4d8b-94f1-50887bbab9de
+sgmodel = TensorNetworkModel(GenericTensorNetworks.target_problem(sg), 2.0)
+
+# ╔═╡ c48f93f6-2d24-44fe-80da-5a691736ef10
+sgsamples = sample(sgmodel, 10)
+
+# ╔═╡ 045503b6-d6b6-4af1-8cf6-b2909322032d
+extracted_results = GenericTensorNetworks.extract_result(sg, ConfigEnumerator([StaticBitVector(sgsamples[:, i]) for i=1:10]))
+
+# ╔═╡ a26a0202-de2f-4ab5-8d7a-f63bacc420c2
+count_antiparallel(graph, c) = count(e->c[e.src] != c[e.dst], Graphs.edges(problem_graph))
+
+# ╔═╡ b995f158-90a3-4fd4-9c6f-d29bb978f3df
+count_antiparallel.(Ref(graph), extracted_results)
+
+# ╔═╡ 7240a670-cece-429d-8af3-269898664f63
+sgmodel2 = TensorNetworkModel(sg, 2.0)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -653,7 +772,7 @@ UnitDiskMapping = "1b61a8d9-79ed-4491-8266-ef37f39e1727"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
-GenericTensorNetworks = "~1.3.4"
+GenericTensorNetworks = "~1.3.5"
 PlutoUI = "~0.7.52"
 TensorInference = "~0.2.1"
 UnitDiskMapping = "~0.3.1"
@@ -666,7 +785,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "5eb440009aa8aec28b7cd356d40b8c17d67b0727"
+project_hash = "2acb099d302786b6505e6fc6ff06c24c998d85c3"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1223,9 +1342,9 @@ version = "0.21.4"
 
 [[deps.GenericTensorNetworks]]
 deps = ["AbstractTrees", "CUDA", "DelimitedFiles", "Distributed", "DocStringExtensions", "FFTW", "Graphs", "LinearAlgebra", "LuxorGraphPlot", "Mods", "OMEinsum", "Polynomials", "Primes", "Printf", "Random", "Requires", "SIMDTypes", "Serialization", "StatsBase", "TropicalNumbers"]
-git-tree-sha1 = "8d25994480c9ef4bfe776a69a744463b012314f9"
+git-tree-sha1 = "c3aa94bad16ede6d1943028ebfc14a8909be087c"
 uuid = "3521c873-ad32-4bb4-b63d-f4f178f42b49"
-version = "1.3.4"
+version = "1.3.5"
 
 [[deps.GeoInterface]]
 deps = ["Extents"]
@@ -2599,10 +2718,11 @@ version = "3.5.0+0"
 # ╟─fc29e819-2304-4ba3-8378-00fe0c3241ce
 # ╟─ec6e5221-aa42-4626-b4db-5fa802f7e4b7
 # ╟─f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
-# ╠═0f5e3e30-2496-480f-b882-1e5d500ea575
+# ╟─0f5e3e30-2496-480f-b882-1e5d500ea575
 # ╟─7798a5ee-3eb2-4006-99fd-71365228a830
 # ╟─3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
 # ╟─75837e42-6cdc-48c3-9568-639ccb48253f
+# ╟─c1de542e-8d75-4eaa-a38e-36473839961a
 # ╟─fb341231-b682-4abc-a9d6-99e5ab54cd0e
 # ╟─2d649ed5-21f3-4486-9bc6-15532218d30f
 # ╟─b9c03db7-4322-4d6f-88ea-0ef068d53554
@@ -2616,8 +2736,8 @@ version = "3.5.0+0"
 # ╠═f0bff7ba-5d70-4d50-9a9a-903af4f32763
 # ╠═7e18a38e-bc88-43a2-a996-c14892597708
 # ╟─9d00d7ae-df2e-4f69-894d-cf588a4823fc
-# ╟─c774f1f6-741e-4529-b40a-333b80229f95
 # ╟─4828777e-9a9f-4e38-bac3-3bad5849a59b
+# ╟─c774f1f6-741e-4529-b40a-333b80229f95
 # ╟─9c1119f9-1bd6-434c-8faa-97470138449d
 # ╟─617f67a7-f734-40b0-b452-60f8bcaae9eb
 # ╟─e432439e-6514-4d8e-ade4-624b506b7eac
@@ -2630,36 +2750,47 @@ version = "3.5.0+0"
 # ╠═c550dd35-d27e-4ac9-933c-f297bda19378
 # ╟─b63b8f93-bfe2-41ca-a12a-ef0a288e65e4
 # ╠═ed163991-60e3-4978-b816-67d968b69312
-# ╟─8713bbef-136e-4b7a-a89f-181b70768481
-# ╠═5fb3b68c-2bac-4a44-b7fd-b00524e092df
-# ╟─36a35136-a9ab-42c6-a9e1-1caac9869e17
+# ╟─f602c846-2a53-4475-b9ba-05b14376d00d
+# ╠═6d7a2811-44e7-479f-92f9-9364da9962fe
+# ╟─3302ab31-e9ee-425c-9aa1-3235f3fa680b
+# ╟─db36f846-caf8-42cd-b6b3-4471532ae2ba
 # ╠═3582dadd-ff87-4422-8f57-350be309858c
 # ╠═a88b18a5-5a5d-4e23-8fca-f81bb7511f33
 # ╠═f044457b-bd98-44fe-bd23-5b7483b04a36
+# ╟─f5c33702-40be-4781-ad11-6d4d7d0a8106
 # ╠═5367fd98-3c7b-4ebc-8b63-10450e867626
 # ╠═8c34ffbd-b81e-403b-85b8-68f4958ee5b1
 # ╠═386710de-c7d7-469a-8c11-bfb9b2780993
-# ╠═befebc4f-e87a-4148-978e-872a1954191f
 # ╠═3e0b902c-a004-45bd-b80b-caf20976db63
 # ╠═5669cbb3-adc4-4510-99fb-f23b379c9f79
 # ╟─6279b321-6c49-47df-9839-2ca5606d1a55
 # ╟─03d4a833-1da9-427c-bba5-277dd756800e
 # ╠═db76819a-ce34-452b-9269-9f687cab4101
+# ╟─e3c6d44e-2d7c-4fba-bf80-f320c7b6af9a
+# ╟─681fe137-c4da-4a30-bb50-90b83b6930c8
+# ╠═17ccecf8-8809-4d24-8943-fa9feed1b975
 # ╟─9840ef13-ac5d-4d46-b3df-31892028ba98
 # ╟─f32202e1-5964-4fa6-8aa1-6dd2cc17d17f
 # ╠═e0467b35-0ffc-4589-8483-3e520bab8f4a
 # ╟─ec351d92-6508-408d-b1df-1ae574d5fc0f
 # ╠═f9c4c094-dd56-4dbf-9a41-35cf6fa73115
 # ╠═3a7bd7bd-2dbb-4f14-9788-06b403d18683
+# ╟─8713bbef-136e-4b7a-a89f-181b70768481
+# ╠═5fb3b68c-2bac-4a44-b7fd-b00524e092df
 # ╟─f2dc2ebd-d214-4c47-b2eb-bf29ae4de1aa
+# ╟─858965b4-4418-46bb-8683-5d58c64ce56d
 # ╠═5769a5d9-bc01-468b-acd0-a419a0405115
+# ╟─fb982482-b419-4935-8cc1-6f01117a4420
 # ╠═79bfb975-8e6b-4c9e-a7c6-142ee7aa9781
 # ╠═d8e784e7-8156-4f65-a8df-80162207d799
-# ╠═6f704bbe-0bf6-4371-8777-e05a621138e5
-# ╠═22fac8cc-796c-4ef7-8f95-02baa34712ab
-# ╠═17ccecf8-8809-4d24-8943-fa9feed1b975
 # ╠═d0823c1c-93f2-4c77-aebf-2af2077131e4
 # ╠═0cbe86ed-40ca-4d63-acfb-68e0db834e58
+# ╠═22fac8cc-796c-4ef7-8f95-02baa34712ab
+# ╟─24241b1c-b209-468a-a235-ba22789c9669
+# ╠═89783585-b6b0-442a-9cbd-0708c9ef70c4
+# ╠═2b208db3-bf89-4bc6-8ab5-a831a595f501
+# ╟─acc5d633-282e-48ef-9cd6-fd52755352b5
+# ╠═1f397c58-9c28-4b4c-8883-4ba6bdaf1f45
 # ╟─9047cead-0c1e-48dc-80f3-84ec15ebf799
 # ╠═b26b418a-46e0-4f05-bdf5-6cebf725680d
 # ╠═79a65e23-8df1-47dc-b363-b4914fedd738
@@ -2709,6 +2840,23 @@ version = "3.5.0+0"
 # ╠═7c609e90-ecf6-4621-9934-8bbd347f0ffe
 # ╟─d1a0ae13-2b62-4e12-ad08-bef58b264402
 # ╟─34c612bc-a98f-4214-a9d3-dab01e8ca2b6
-# ╠═1d042e40-bb13-485d-9233-a63addc7850a
+# ╟─8bbd114b-9535-4255-b5b8-94f0826b707e
+# ╠═d1e4a420-eec2-4ae4-b7b5-4d0c80ec1e10
+# ╠═6a7641b2-7b11-4580-8342-3cebe5a70508
+# ╠═9e79b8c8-7fb4-4724-84d9-ad16dc837c07
+# ╠═e3519f26-963b-417d-a5bb-e018de93791c
+# ╠═93b741b0-46ca-4f06-a210-c9418ac476e5
+# ╠═9a598b10-2e54-46c8-869f-b7ec1a238152
+# ╠═5bda5ef8-62ce-4ae5-859c-4874a779bda6
+# ╠═d98a49e4-3733-498b-873f-dad6dbf1901b
+# ╠═bb0009de-8bff-4820-bfd6-d92f17c0a2f8
+# ╟─022c861e-f457-446e-b7cf-68a96f0da032
+# ╠═f55247b1-0493-46cf-a636-16c400b13caf
+# ╠═92a9a7fc-4a9e-4d8b-94f1-50887bbab9de
+# ╠═c48f93f6-2d24-44fe-80da-5a691736ef10
+# ╠═045503b6-d6b6-4af1-8cf6-b2909322032d
+# ╠═a26a0202-de2f-4ab5-8d7a-f63bacc420c2
+# ╠═b995f158-90a3-4fd4-9c6f-d29bb978f3df
+# ╠═7240a670-cece-429d-8af3-269898664f63
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
