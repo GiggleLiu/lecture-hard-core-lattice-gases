@@ -707,19 +707,20 @@ function fullerene()
 end
 
 # ╔═╡ 6a7641b2-7b11-4580-8342-3cebe5a70508
-ledges = let
+function dual_fullerene(radius)
 	points = fullerene()
 	g_c60 = unit_disk_graph(points, sqrt(5))
 	edges = [(e.src, e.dst) for e in Graphs.edges(g_c60)]
 	ne = Graphs.ne(g_c60)
-	[(i, j) for i=1:ne, j=1:ne if j > i && !isempty(edges[i] ∩ edges[j])]
+	ledges = [(i, j) for i=1:ne, j=1:ne if j > i && sum(abs2, edges[i] .- edges[j]) < radius^2]
+	return Graphs.SimpleGraph([Graphs.Edge(i, j) for (i, j) in ledges])
 end
 
 # ╔═╡ 9e79b8c8-7fb4-4724-84d9-ad16dc837c07
-problem_graph = Graphs.SimpleGraph([Graphs.Edge(i, j) for (i, j) in ledges])
+problem_graph = dual_fullerene(sqrt(30))
 
 # ╔═╡ e3519f26-963b-417d-a5bb-e018de93791c
-sg = SpinGlass(problem_graph; edge_weights=ones(Int, length(ledges)))
+sg = SpinGlass(problem_graph; edge_weights=ones(Int, Graphs.ne(problem_graph)))
 
 # ╔═╡ 93b741b0-46ca-4f06-a210-c9418ac476e5
 sg |> typeof |> fieldnames
@@ -758,6 +759,9 @@ count_antiparallel(graph, c) = count(e->c[e.src] != c[e.dst], Graphs.edges(probl
 
 # ╔═╡ b995f158-90a3-4fd4-9c6f-d29bb978f3df
 count_antiparallel.(Ref(graph), extracted_results)
+
+# ╔═╡ 113535bd-738e-4612-8040-d42f8e7f5f58
+problem_graph2 = dual_fullerene(sqrt(7))
 
 # ╔═╡ 7240a670-cece-429d-8af3-269898664f63
 sgmodel2 = TensorNetworkModel(sg, 2.0)
@@ -2857,6 +2861,7 @@ version = "3.5.0+0"
 # ╠═045503b6-d6b6-4af1-8cf6-b2909322032d
 # ╠═a26a0202-de2f-4ab5-8d7a-f63bacc420c2
 # ╠═b995f158-90a3-4fd4-9c6f-d29bb978f3df
+# ╠═113535bd-738e-4612-8040-d42f8e7f5f58
 # ╠═7240a670-cece-429d-8af3-269898664f63
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
