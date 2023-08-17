@@ -29,6 +29,9 @@ using TensorInference
 # ╔═╡ 7ba68748-87d6-41bc-a7c5-8d2c27bad233
 using UnitDiskMapping
 
+# ╔═╡ 4f604850-96a5-42b7-8c9b-21052ce1d958
+using Rotations
+
 # ╔═╡ c662789f-19d1-4b75-ab95-dbe12c11330d
 TableOfContents()
 
@@ -55,44 +58,16 @@ function compare_configs(locs, graph, config1, config2)
 	show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
 end
 
-# ╔═╡ fc29e819-2304-4ba3-8378-00fe0c3241ce
-md"""
-# Irrelevant: Road to mastering machine learning
-This lecture is supposed to be delivered by Lei. He wanted to lecture about machine learning. If you are interesting in learning machine learning for physicists, please check the following repo and books.
-## Machine learning for physicists
-Github: [wangleiphy/ml4p](https://github.com/wangleiphy/ml4p)
-"""
-
-# ╔═╡ ec6e5221-aa42-4626-b4db-5fa802f7e4b7
-md"""![](https://user-images.githubusercontent.com/6257240/260753478-f4960c86-65f0-4d71-a264-1a7f47b0b3b7.png)
-"""
-
-# ╔═╡ f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
-md"## The book that I enjoyed reading"
-
-# ╔═╡ 0f5e3e30-2496-480f-b882-1e5d500ea575
-html"""
-<img src="https://user-images.githubusercontent.com/6257240/260753742-e1146b86-7876-4f80-93cd-7242aa518815.png" width=300>
-"""
-
-# ╔═╡ 7798a5ee-3eb2-4006-99fd-71365228a830
-md"## Online lecture: CS231n"
-
-# ╔═╡ 3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
-html"""
-<iframe width="560" height="315" src="https://www.youtube.com/embed/vT1JzLTH4G4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-"""
-
 # ╔═╡ 75837e42-6cdc-48c3-9568-639ccb48253f
-md"# Why ground state finding of a many body system is difficult?"
+md"# Tensor networks for computational hard problems"
 
 # ╔═╡ c1de542e-8d75-4eaa-a38e-36473839961a
 md"""
-1. Defining hard-core lattice gases.
+1. NP-hardness and problem reduction
+2. Defining hard-core lattice gases.
 2. The solution space properties of hard-core lattice gases.
-3. The finite temperature statistics of hard-core lattice gases.
-4. Given a hard-core lattice gas ground state solving oracle, the integer factoring problem can be solved efficiently. 
-5. If we have time, I will show how to solve the challenge problem.
+3. The statistical properties (at finite temperature) of hard-core lattice gases.
+4. Given a hard-core lattice gas ground state solving oracle, the integer factoring problem can be solved efficiently.
 """
 
 # ╔═╡ fb341231-b682-4abc-a9d6-99e5ab54cd0e
@@ -690,7 +665,13 @@ md"""
 # Solving the challenge problem
 """
 
+# ╔═╡ cd8998cd-e4f7-4871-b7c2-d2c06741db02
+md"""
+#### Step 1: construct the target problem graph - the line graph of C60 structure
+"""
+
 # ╔═╡ d1e4a420-eec2-4ae4-b7b5-4d0c80ec1e10
+# Returns the C60 structure 3D coordinates
 function fullerene()
 	φ = (1+√5)/2
 	points = NTuple{3,Float64}[]
@@ -707,23 +688,77 @@ function fullerene()
 end
 
 # ╔═╡ 6a7641b2-7b11-4580-8342-3cebe5a70508
-function dual_fullerene(radius)
-	points = fullerene()
-	g_c60 = unit_disk_graph(points, sqrt(5))
-	edges = [(e.src, e.dst) for e in Graphs.edges(g_c60)]
-	ne = Graphs.ne(g_c60)
-	ledges = [(i, j) for i=1:ne, j=1:ne if j > i && sum(abs2, edges[i] .- edges[j]) < radius^2]
+# get the line graph of target graph
+function line_graph(g::Graphs.SimpleGraph)
+	edges = [(e.src, e.dst) for e in Graphs.edges(g)]
+	ne = Graphs.ne(g)
+	ledges = [(i, j) for i=1:ne, j=1:ne if j > i && !isempty(edges[i] ∩ edges[j])]
 	return Graphs.SimpleGraph([Graphs.Edge(i, j) for (i, j) in ledges])
 end
 
-# ╔═╡ 9e79b8c8-7fb4-4724-84d9-ad16dc837c07
-problem_graph = dual_fullerene(sqrt(30))
+# ╔═╡ 6596d246-cc15-460d-ac04-351d59772ac5
+# get the distance-k vertex pairs
+function nearest_pairs(g, k::Int)
+	res = Tuple{Int,Int}[]
+	for v in Graphs.vertices(g)
+		for (w, d) in Graphs.neighborhood_dists(g, v, k)
+			if d == k && v < w
+				push!(res, (v, w))
+			end
+		end
+	end
+	return res
+end
+
+# ╔═╡ 13c3ba25-dc3f-4305-b23d-65858df7410a
+points_c60 = fullerene()
+
+# ╔═╡ 0100f612-8f48-4972-a66d-77397510de07
+g_c60 = unit_disk_graph(points_c60, sqrt(5))
+
+# ╔═╡ 073661ce-f59e-4c08-83a6-73fbeed3907f
+g_c60line = line_graph(g_c60)
+
+# ╔═╡ c6e2ec7c-7dcb-49d4-8041-70058c17dff7
+md"""
+Let us visualize it.
+"""
+
+# ╔═╡ 8fe3c182-f927-4d01-8321-0104431ec5ed
+function project_graph(locs, graph, Rx, Ry, Rz; colors)
+	vertices, edges = Int[], Tuple{Int,Int}[]
+	# rotate
+	rlocs = [RotXYZ(Rx, Ry, Rz) * [loc...] for loc in locs]
+	# filter
+	show_graph(graph; locs=rlocs, unit=15, texts=fill("", length(rlocs)), vertex_colors=colors, vertex_line_width=0)
+end
+
+# ╔═╡ 443112ea-e6ab-4485-9610-7c8984c05753
+md"X: $(@bind Rx Slider(0:0.1:2π)), Y: $(@bind Ry Slider(0:0.1:2π)), Z: $(@bind Rz Slider(0:0.1:2π))"
+
+# ╔═╡ c4965f1d-150f-4353-bab9-4f772e34ad7a
+let
+	dual_points = [points_c60[e.src] .+ points_c60[e.dst] for e in Graphs.edges(g_c60)]
+	#allpoints = [points..., dual_points...]
+	#project_graph(allpoints, join(g_c60, dual), Rx, Ry, Rz)
+	project_graph(dual_points, g_c60line, Rx, Ry, Rz; colors=fill("black", Graphs.nv(g_c60line)))
+end
+
+# ╔═╡ a37e2723-561c-496c-88a1-6951e3623c65
+md"""
+#### Step 2: Use `GenericTensorNetworks` to solve this problem
+"""
+
+# ╔═╡ a3c2a37f-6fb3-4618-b609-b5c97de4bbe9
+md"""
+Create a Spin-Glass problem instance.
+"""
 
 # ╔═╡ e3519f26-963b-417d-a5bb-e018de93791c
-sg = SpinGlass(problem_graph; edge_weights=ones(Int, Graphs.ne(problem_graph)))
+sg = SpinGlass(g_c60line; edge_weights=ones(Int, Graphs.ne(g_c60line)), optimizer=TreeSA())
 
 # ╔═╡ 93b741b0-46ca-4f06-a210-c9418ac476e5
-sg |> typeof |> fieldnames
+fieldnames(typeof(sg))
 
 # ╔═╡ 9a598b10-2e54-46c8-869f-b7ec1a238152
 contraction_complexity(GenericTensorNetworks.target_problem(sg))
@@ -742,35 +777,58 @@ md"""
 We emphasis that the spin-glass problem is reduced to the Max-Cut problem. Since we work on the target problem, the generated samples needs to be extracted.
 """
 
-# ╔═╡ f55247b1-0493-46cf-a636-16c400b13caf
-GenericTensorNetworks.target_problem(sg)
+# ╔═╡ cf0d7bb9-f310-43ea-8496-96a1d32be201
+configs_max = solve(sg, ConfigsMax(; tree_storage=true))[].c;
 
-# ╔═╡ 92a9a7fc-4a9e-4d8b-94f1-50887bbab9de
-sgmodel = TensorNetworkModel(GenericTensorNetworks.target_problem(sg), 2.0)
+# ╔═╡ 9e3ab7b7-c226-4588-94cf-74a724cc7c1c
+best_samples = generate_samples(configs_max, 100)
 
-# ╔═╡ c48f93f6-2d24-44fe-80da-5a691736ef10
-sgsamples = sample(sgmodel, 10)
+# ╔═╡ 3f182882-5f80-426c-a30a-7485376e8895
+@bind sample_index Slider(1:length(best_samples); show_value=true)
 
-# ╔═╡ 045503b6-d6b6-4af1-8cf6-b2909322032d
-extracted_results = GenericTensorNetworks.extract_result(sg, ConfigEnumerator([StaticBitVector(sgsamples[:, i]) for i=1:10]))
-
-# ╔═╡ a26a0202-de2f-4ab5-8d7a-f63bacc420c2
-count_antiparallel(graph, c) = count(e->c[e.src] != c[e.dst], Graphs.edges(problem_graph))
-
-# ╔═╡ b995f158-90a3-4fd4-9c6f-d29bb978f3df
-count_antiparallel.(Ref(graph), extracted_results)
+# ╔═╡ 570cc708-8361-4087-b267-bf17d0a48b03
+let
+	dual_points = [points_c60[e.src] .+ points_c60[e.dst] for e in Graphs.edges(g_c60)]
+	project_graph(dual_points, g_c60line, Rx, Ry, Rz; colors=[c == 1 ? "red" : "black" for c in best_samples[sample_index]])
+end
 
 # ╔═╡ 113535bd-738e-4612-8040-d42f8e7f5f58
-problem_graph2 = dual_fullerene(sqrt(7))
+g_c60line2 = let
+	g = deepcopy(g_c60line)
+	second_nearest = nearest_pairs(g, 2)
+	for (i, j) in second_nearest
+		Graphs.add_edge!(g, i, j)
+	end
+	g
+end
 
-# ╔═╡ 7240a670-cece-429d-8af3-269898664f63
-sgmodel2 = TensorNetworkModel(sg, 2.0)
+# ╔═╡ 6624b46d-b73d-4531-a5f9-78e9cc0bf217
+sg2 = SpinGlass(g_c60line2; edge_weights=ones(Int, Graphs.ne(g_c60line2)), optimizer=TreeSA())
+
+# ╔═╡ fdaa5423-f120-4429-ac1f-2c266b5eff47
+contraction_complexity(sg2.target)
+
+# ╔═╡ afd8ec8f-1400-495c-89c1-dc58e9715c7c
+md"""
+```julia
+julia> @time solve(sg2, CountingMax(); usecuda=true, T=Int)
+  0.469537 seconds (224.23 k allocations: 10.290 MiB)
+0-dimensional CuArray{CountingTropical{Int64, Int64}, 0, CUDA.Mem.DeviceBuffer}:
+(-200, 67441356)ₜ
+
+julia> @time solve(sg2, GraphPolynomial(); usecuda=true)
+1529.071057 seconds (322.69 M allocations: 14.157 GiB, 0.72% gc time)
+0-dimensional Array{LaurentPolynomial{BigInt, :x}, 0}:
+LaurentPolynomial(2*x⁻⁵⁴⁰ + 180*x⁻⁵²⁸ + 1080*x⁻⁵¹⁸ + 6930*x⁻⁵¹⁶ + 1880*x⁻⁵¹⁰ + 6240*x⁻⁵⁰⁸ + 76920*x⁻⁵⁰⁶ + 151180*x⁻⁵⁰⁴ + 5880*x⁻⁵⁰² + 19284*x⁻⁵⁰⁰ + 170760*x⁻⁴⁹⁸ + 625080*x⁻⁴⁹⁶ + 2315640*x⁻⁴⁹⁴ + 2179180*x⁻⁴⁹² + 587808*x⁻⁴⁹⁰ + 2221020*x⁻⁴⁸⁸ + 8518000*x⁻⁴⁸⁶ + 23227680*x⁻⁴⁸⁴ + 40438920*x⁻⁴⁸² + 29308568*x⁻⁴⁸⁰ + 34838400*x⁻⁴⁷⁸ + 105522840*x⁻⁴⁷⁶ + 260553920*x⁻⁴⁷⁴ + 471589140*x⁻⁴⁷² + 554607600*x⁻⁴⁷⁰ + 627335990*x⁻⁴⁶⁸ + 1306930320*x⁻⁴⁶⁶ + 2913882240*x⁻⁴⁶⁴ + 5152434920*x⁻⁴⁶² + 7157976078*x⁻⁴⁶⁰ + 9372922200*x⁻⁴⁵⁸ + 16350102360*x⁻⁴⁵⁶ + 31875303240*x⁻⁴⁵⁴ + 54825135420*x⁻⁴⁵² + 81005127272*x⁻⁴⁵⁰ + 117330574080*x⁻⁴⁴⁸ + 193485616320*x⁻⁴⁴⁶ + 342572352400*x⁻⁴⁴⁴ + 567140330160*x⁻⁴⁴² + 865795535436*x⁻⁴⁴⁰ + 1316769126960*x⁻⁴³⁸ + 2137552097040*x⁻⁴³⁶ + 3565110703680*x⁻⁴³⁴ + 5738857808980*x⁻⁴³² + 8891316451200*x⁻⁴³⁰ + 13851091018800*x⁻⁴²⁸ + 22226145464560*x⁻⁴²⁶ + 35878183618380*x⁻⁴²⁴ + 56785288064160*x⁻⁴²² + 88622863747140*x⁻⁴²⁰ + 139237645261440*x⁻⁴¹⁸ + 221172964613160*x⁻⁴¹⁶ + 350664150439680*x⁻⁴¹⁴ + 550660027478640*x⁻⁴¹² + 861979477645584*x⁻⁴¹⁰ + 1354780284595860*x⁻⁴⁰⁸ + 2134576988391600*x⁻⁴⁰⁶ + 3352933663254750*x⁻⁴⁰⁴ + 5248349553226040*x⁻⁴⁰² + 8214661992245676*x⁻⁴⁰⁰ + 12874470821728560*x⁻³⁹⁸ + 20165800781591550*x⁻³⁹⁶ + 31527084026597160*x⁻³⁹⁴ + 49237001050232280*x⁻³⁹² + 76893772319856960*x⁻³⁹⁰ + 120042828446598990*x⁻³⁸⁸ + 187201084459427640*x⁻³⁸⁶ + 291613346853442760*x⁻³⁸⁴ + 453944143873789680*x⁻³⁸² + 706137478557067104*x⁻³⁸⁰ + 1097313297682723920*x⁻³⁷⁸ + 1703210349485918280*x⁻³⁷⁶ + 2640766088689698720*x⁻³⁷⁴ + 4089820414600375610*x⁻³⁷² + 6325889278904451168*x⁻³⁷⁰ + 9770746369063749360*x⁻³⁶⁸ + 15069530152127684360*x⁻³⁶⁶ + 23206333797337734540*x⁻³⁶⁴ + 35677673400106584840*x⁻³⁶² + 54754644093725588248*x⁻³⁶⁰ + 83876523376899240120*x⁻³⁵⁸ + 128236886020418483940*x⁻³⁵⁶ + 195654466380310314200*x⁻³⁵⁴ + 297867038794331094780*x⁻³⁵² + 452443499784446370048*x⁻³⁵⁰ + 685593598818321383340*x⁻³⁴⁸ + 1036281882071507764200*x⁻³⁴⁶ + 1562229967228396885680*x⁻³⁴⁴ + 2348625051779594468120*x⁻³⁴² + 3520684203132709833858*x⁻³⁴⁰ + 5261688443639047343280*x⁻³³⁸ + 7838717014833352206560*x⁻³³⁶ + 11639125059348899930880*x⁻³³⁴ + 17221887397762277382750*x⁻³³² + 25389337409722217981648*x⁻³³⁰ + 37286572724309226471720*x⁻³²⁸ + 54537957099711684067320*x⁻³²⁶ + 79432707533590305548980*x⁻³²⁴ + 115174466125246436331840*x⁻³²² + 166212785050149836443596*x⁻³²⁰ + 238677323813989905290880*x⁻³¹⁸ + 340937599075454678880180*x⁻³¹⁶ + 484311356421117396770520*x⁻³¹⁴ + 683941594048797557364640*x⁻³¹² + 959853841334229687536352*x⁻³¹⁰ + 1338188760685311456441240*x⁻³⁰⁸ + 1852576919114243135670280*x⁻³⁰⁶ + 2545578882269320541059440*x⁻³⁰⁴ + 3470050466494856118704880*x⁻³⁰² + 4690207331499817757241724*x⁻³⁰⁰ + 6282054602409528827405640*x⁻²⁹⁸ + 8332720901152424990062080*x⁻²⁹⁶ + 10938105382986333978071200*x⁻²⁹⁴ + 14198136948859624756530480*x⁻²⁹² + 18208899621601546179632088*x⁻²⁹⁰ + 23050958509360339672133420*x⁻²⁸⁸ + 28773506964372365188576320*x⁻²⁸⁶ + 35374535646678751426233090*x⁻²⁸⁴ + 42778174376256449042653160*x⁻²⁸² + 50811701829656863839124776*x⁻²⁸⁰ + 59186368843625045456450160*x⁻²⁷⁸ + 67487864538672704026527230*x⁻²⁷⁶ + 75183441723146639463736800*x⁻²⁷⁴ + 81652609749913059838959060*x⁻²⁷² + 86245942787616501266164496*x⁻²⁷⁰ + 88371153333586497042646230*x⁻²⁶⁸ + 87597114912246056022024720*x⁻²⁶⁶ + 83756461718738418428184300*x⁻²⁶⁴ + 77019251615225670490794120*x⁻²⁶² + 67909044567214572263807184*x⁻²⁶⁰ + 57243104864531722077311360*x⁻²⁵⁸ + 46000430966319315040322940*x⁻²⁵⁶ + 35147872674254551256288760*x⁻²⁵⁴ + 25473034862715530108084940*x⁻²⁵² + 17471965728926713968235920*x⁻²⁵⁰ + 11318572516127946440464080*x⁻²⁴⁸ + 6911779787025839129563480*x⁻²⁴⁶ + 3971139180862867851342090*x⁻²⁴⁴ + 2142544458406893403045680*x⁻²⁴² + 1083285538069762699249604*x⁻²⁴⁰ + 512118278588744100231120*x⁻²³⁸ + 225784139285006246065260*x⁻²³⁶ + 92558328317957865343680*x⁻²³⁴ + 35157049287919243784880*x⁻²³² + 12321910103095777972056*x⁻²³⁰ + 3965164474956979380840*x⁻²²⁸ + 1164644101193222398440*x⁻²²⁶ + 310030953597431387400*x⁻²²⁴ + 74171258404206425280*x⁻²²² + 15788368475984541048*x⁻²²⁰ + 2955232097232551040*x⁻²¹⁸ + 479802610380448240*x⁻²¹⁶ + 66529900824874200*x⁻²¹⁴ + 7744714698343980*x⁻²¹² + 742676055934152*x⁻²¹⁰ + 57357632728380*x⁻²⁰⁸ + 3454913154840*x⁻²⁰⁶ + 153604518320*x⁻²⁰⁴ + 4514839680*x⁻²⁰² + 67441356*x⁻²⁰⁰)
+```
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 GenericTensorNetworks = "3521c873-ad32-4bb4-b63d-f4f178f42b49"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 TensorInference = "c2297e78-99bd-40ad-871d-f50e56b81012"
 UnitDiskMapping = "1b61a8d9-79ed-4491-8266-ef37f39e1727"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
@@ -778,6 +836,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 [compat]
 GenericTensorNetworks = "~1.3.5"
 PlutoUI = "~0.7.52"
+Rotations = "~1.5.1"
 TensorInference = "~0.2.1"
 UnitDiskMapping = "~0.3.1"
 WGLMakie = "~0.8.12"
@@ -789,7 +848,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "2acb099d302786b6505e6fc6ff06c24c998d85c3"
+project_hash = "37d424e18603726393965c92d1210d5fa001cec1"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1544,10 +1603,10 @@ uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
 [[deps.JLLWrappers]]
-deps = ["Preferences"]
-git-tree-sha1 = "abc9885a7ca2052a736a600f7fa66209f96506e1"
+deps = ["Artifacts", "Preferences"]
+git-tree-sha1 = "a7e91ef94114d5bc8952bcaa8d6ff952cf709808"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.4.1"
+version = "1.4.2"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
@@ -1557,9 +1616,9 @@ version = "0.21.4"
 
 [[deps.JSServe]]
 deps = ["Base64", "CodecZlib", "Colors", "Dates", "Deno_jll", "HTTP", "Hyperscript", "LinearAlgebra", "Markdown", "MsgPack", "Observables", "RelocatableFolders", "SHA", "Sockets", "Tables", "Test", "ThreadPools", "URIs", "UUIDs", "WidgetsBase"]
-git-tree-sha1 = "91da91c7b82aed960acf4621e7b24492ec3e3861"
+git-tree-sha1 = "38be9964165e8693b63f2d5ba2b6154dfd69c3b1"
 uuid = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
-version = "2.2.9"
+version = "2.2.10"
 
 [[deps.JpegTurbo]]
 deps = ["CEnum", "FileIO", "ImageCore", "JpegTurbo_jll", "TOML"]
@@ -1970,9 +2029,9 @@ version = "0.5.5+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "e3a6546c1577bfd701771b477b794a52949e7594"
+git-tree-sha1 = "963b004d15216f8129f6c0f7d187efa136570be0"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.7.6"
+version = "1.7.7"
 
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2138,6 +2197,12 @@ git-tree-sha1 = "6ec7ac8412e83d57e313393220879ede1740f9ee"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.8.2"
 
+[[deps.Quaternions]]
+deps = ["LinearAlgebra", "Random", "RealDot"]
+git-tree-sha1 = "da095158bdc8eaccb7890f9884048555ab771019"
+uuid = "94ee1d12-ae83-5a48-8b1c-48b8ff168ae0"
+version = "0.7.4"
+
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -2172,6 +2237,12 @@ weakdeps = ["FixedPointNumbers"]
 
     [deps.Ratios.extensions]
     RatiosFixedPointNumbersExt = "FixedPointNumbers"
+
+[[deps.RealDot]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "9f0a1b71baaf7650f4fa8a1d168c7fb6ee41f0c9"
+uuid = "c1ae055f-0cd5-4b69-90a6-9a35b1a98df9"
+version = "0.1.0"
 
 [[deps.RecipesBase]]
 deps = ["PrecompileTools"]
@@ -2213,6 +2284,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "6ed52fdd3382cf21947b15e8870ac0ddbff736da"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.4.0+0"
+
+[[deps.Rotations]]
+deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays"]
+git-tree-sha1 = "54ccb4dbab4b1f69beb255a2c0ca5f65a9c82f08"
+uuid = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+version = "1.5.1"
 
 [[deps.RoundingEmulator]]
 git-tree-sha1 = "40b9edad2e5287e05bd413a38f61a8ff55b9557b"
@@ -2719,12 +2796,6 @@ version = "3.5.0+0"
 # ╠═877f87b9-59e4-4577-897c-eef44aa6e2eb
 # ╠═0f2c3023-262e-4afb-bf06-a8e8422f7339
 # ╠═541dd885-fc34-48d3-a71f-b1e4f8b8d41a
-# ╟─fc29e819-2304-4ba3-8378-00fe0c3241ce
-# ╟─ec6e5221-aa42-4626-b4db-5fa802f7e4b7
-# ╟─f24ce71c-a0e2-4925-bf55-cc4222ce2a6e
-# ╟─0f5e3e30-2496-480f-b882-1e5d500ea575
-# ╟─7798a5ee-3eb2-4006-99fd-71365228a830
-# ╟─3972a68d-86d2-4b16-b2fa-5ce6f22bdaed
 # ╟─75837e42-6cdc-48c3-9568-639ccb48253f
 # ╟─c1de542e-8d75-4eaa-a38e-36473839961a
 # ╟─fb341231-b682-4abc-a9d6-99e5ab54cd0e
@@ -2845,9 +2916,20 @@ version = "3.5.0+0"
 # ╟─d1a0ae13-2b62-4e12-ad08-bef58b264402
 # ╟─34c612bc-a98f-4214-a9d3-dab01e8ca2b6
 # ╟─8bbd114b-9535-4255-b5b8-94f0826b707e
+# ╟─cd8998cd-e4f7-4871-b7c2-d2c06741db02
 # ╠═d1e4a420-eec2-4ae4-b7b5-4d0c80ec1e10
 # ╠═6a7641b2-7b11-4580-8342-3cebe5a70508
-# ╠═9e79b8c8-7fb4-4724-84d9-ad16dc837c07
+# ╠═6596d246-cc15-460d-ac04-351d59772ac5
+# ╠═13c3ba25-dc3f-4305-b23d-65858df7410a
+# ╠═0100f612-8f48-4972-a66d-77397510de07
+# ╠═073661ce-f59e-4c08-83a6-73fbeed3907f
+# ╟─c6e2ec7c-7dcb-49d4-8041-70058c17dff7
+# ╠═4f604850-96a5-42b7-8c9b-21052ce1d958
+# ╠═8fe3c182-f927-4d01-8321-0104431ec5ed
+# ╟─443112ea-e6ab-4485-9610-7c8984c05753
+# ╠═c4965f1d-150f-4353-bab9-4f772e34ad7a
+# ╟─a37e2723-561c-496c-88a1-6951e3623c65
+# ╟─a3c2a37f-6fb3-4618-b609-b5c97de4bbe9
 # ╠═e3519f26-963b-417d-a5bb-e018de93791c
 # ╠═93b741b0-46ca-4f06-a210-c9418ac476e5
 # ╠═9a598b10-2e54-46c8-869f-b7ec1a238152
@@ -2855,13 +2937,13 @@ version = "3.5.0+0"
 # ╠═d98a49e4-3733-498b-873f-dad6dbf1901b
 # ╠═bb0009de-8bff-4820-bfd6-d92f17c0a2f8
 # ╟─022c861e-f457-446e-b7cf-68a96f0da032
-# ╠═f55247b1-0493-46cf-a636-16c400b13caf
-# ╠═92a9a7fc-4a9e-4d8b-94f1-50887bbab9de
-# ╠═c48f93f6-2d24-44fe-80da-5a691736ef10
-# ╠═045503b6-d6b6-4af1-8cf6-b2909322032d
-# ╠═a26a0202-de2f-4ab5-8d7a-f63bacc420c2
-# ╠═b995f158-90a3-4fd4-9c6f-d29bb978f3df
+# ╠═cf0d7bb9-f310-43ea-8496-96a1d32be201
+# ╠═9e3ab7b7-c226-4588-94cf-74a724cc7c1c
+# ╠═3f182882-5f80-426c-a30a-7485376e8895
+# ╠═570cc708-8361-4087-b267-bf17d0a48b03
 # ╠═113535bd-738e-4612-8040-d42f8e7f5f58
-# ╠═7240a670-cece-429d-8af3-269898664f63
+# ╠═6624b46d-b73d-4531-a5f9-78e9cc0bf217
+# ╠═fdaa5423-f120-4429-ac1f-2c266b5eff47
+# ╟─afd8ec8f-1400-495c-89c1-dc58e9715c7c
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
