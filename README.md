@@ -1,5 +1,4 @@
 # Lectures on Hard-Core Lattice Gases
-> The final version will come out by Aug 20
 
 This repository contains my lectures notebooks for [2023年多体计算方法讲习班（理论物理专款科技活动项目）](http://2023mbcc.cpsjournals.cn/), which covers the following topics.
 
@@ -10,4 +9,4 @@ This repository contains my lectures notebooks for [2023年多体计算方法讲
 
 The notebook is in Julia programming language, and it could be opened with [Pluto notebook](https://github.com/fonsp/Pluto.jl).
 * [source](notebooks/complexity.jl)
-* [pdf(TBD)](notebooks/complexity.pdf)
+* [pdf](notebooks/complexity.pdf)

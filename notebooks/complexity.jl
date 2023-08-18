@@ -32,39 +32,61 @@ using UnitDiskMapping
 # ╔═╡ 4f604850-96a5-42b7-8c9b-21052ce1d958
 using Rotations
 
-# ╔═╡ c662789f-19d1-4b75-ab95-dbe12c11330d
-TableOfContents()
-
-# ╔═╡ 877f87b9-59e4-4577-897c-eef44aa6e2eb
-plot_theme = Theme(
-    Axis = (
-        xlabelsize=28,
-		ylabelsize=28,
-		xticklabelsize=20,
-		yticklabelsize=20,
-    )
-);
-
-# ╔═╡ 0f2c3023-262e-4afb-bf06-a8e8422f7339
-# utility for showing a configuration
-function show_config(locs, graph, config)
-	show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[x == 1 ? "red" : "white" for x in config])
-end
-
-# ╔═╡ 541dd885-fc34-48d3-a71f-b1e4f8b8d41a
-# utility for comparing two configurations
-function compare_configs(locs, graph, config1, config2)
-	colormap = Dict((0, 0)=>"white", (0, 1)=>"blue", (1, 0)=>"red", (1, 1)=>"purple")
-	show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
-end
-
 # ╔═╡ 75837e42-6cdc-48c3-9568-639ccb48253f
 md"# Tensor networks for computational hard problems"
 
+# ╔═╡ b2e7bb00-e354-4b54-a5b4-38e4a257715e
+md"""This notebook could be downloaded [here](https://github.com/GiggleLiu/lecture-hard-core-lattice-gases)."""
+
+# ╔═╡ e0a1ec3b-dbc3-4e9f-ae41-23d803de28dd
+md"""
+[Jinguo Liu](https://github.com/GiggleLiu) ([Hong Kong University of Science and Technology (Guangzhou), Function hub, Advanced material thrust](https://funh.hkust-gz.edu.cn/en/thrust/amat))
+
+[jinguoliu@hkust-gz.edu.cn](mailto:jinguoliu@hkust-gz.edu.cn) (PhD applications welcomed)
+"""
+
+# ╔═╡ 9c1119f9-1bd6-434c-8faa-97470138449d
+md"""
+* [Liu J G, Gao X, Cain M, et al. Computing solution space properties of combinatorial optimization problems via generic tensor networks[J]. SIAM Journal on Scientific Computing, 2023, 45(3): A1239-A1270.](https://epubs.siam.org/doi/full/10.1137/22M1501787)
+"""
+
+# ╔═╡ 34c612bc-a98f-4214-a9d3-dab01e8ca2b6
+html"""
+<p>To get a systematic understanding of computational complexity theory and its relation with statistical physics.</p>
+<table style="border:none">
+<tr>
+	<td rowspan=4>
+	<img src="https://images-na.ssl-images-amazon.com/images/I/51QttTd6JLL._SX351_BO1,204,203,200_.jpg" width=200px/>
+	</td>
+	<td rowspan=1 align="center">
+	<big>The Nature of Computation</big><br><br>
+	By <strong>Cristopher Moore & Stephan Mertens</strong>
+	</td>
+</tr>
+<tr>
+	<td align="center">
+	<strong>Section 5</strong>
+	<br><br>Who is the hardest one of All?
+	<br>NP-Completeness
+	</td>
+</tr>
+<tr>
+	<td align="center">
+	<strong>Section 13</strong>
+	<br><br>Counting, sampling and statistical physics
+	</td>
+</tr>
+</table>
+"""
+
+# ╔═╡ 82957900-d283-489c-92a4-a51ebccd49e8
+md"""
+# Contents of this lecture
+"""
+
 # ╔═╡ c1de542e-8d75-4eaa-a38e-36473839961a
 md"""
-1. NP-hardness and problem reduction
-2. Defining hard-core lattice gases.
+1. Defining hard-core lattice gases.
 2. The solution space properties of hard-core lattice gases.
 3. The statistical properties (at finite temperature) of hard-core lattice gases.
 4. Given a hard-core lattice gas ground state solving oracle, the integer factoring problem can be solved efficiently.
@@ -144,11 +166,6 @@ md"""
 - **Q4:** How does the energy landscape look like?
 """
 
-# ╔═╡ 9c1119f9-1bd6-434c-8faa-97470138449d
-md"""
-* Liu J G, Gao X, Cain M, et al. Computing solution space properties of combinatorial optimization problems via generic tensor networks[J]. SIAM Journal on Scientific Computing, 2023, 45(3): A1239-A1270.
-"""
-
 # ╔═╡ 617f67a7-f734-40b0-b452-60f8bcaae9eb
 md"""
 The solution space hard-core lattice gas is equivalent to that of an independent set problem. The independent set problem involves finding a set of vertices in a graph such that no two vertices in the set are adjacent (i.e., there is no edge connecting them).
@@ -183,9 +200,6 @@ A standard task of a combinatorial a optimization problem is to get one of the b
 # ╔═╡ 899a0d52-d6ea-494a-808f-5b1ae1fdfba2
 bestconfig = solve(problem, SingleConfigMax())[]
 
-# ╔═╡ c550dd35-d27e-4ac9-933c-f297bda19378
-show_config(sites, graph, bestconfig.c.data)
-
 # ╔═╡ b63b8f93-bfe2-41ca-a12a-ef0a288e65e4
 md"""
 If one is only interested in finding the maximum solution size, the `SizeMax` property can be must faster to evaluate.
@@ -211,6 +225,9 @@ There is no degeneracy.
 md"""
 ## Solution space visualization
 """
+
+# ╔═╡ d853ac06-b997-4ada-82c0-8758328fcb4d
+solve(problem, CountingMax(2))[]
 
 # ╔═╡ 3582dadd-ff87-4422-8f57-350be309858c
 max2configs = solve(problem, ConfigsMax(2; tree_storage=true))[]
@@ -249,9 +266,6 @@ config_graph = let
 	end
 	config_graph
 end
-
-# ╔═╡ 3e0b902c-a004-45bd-b80b-caf20976db63
-compare_configs(sites, graph, suboptimal[2], suboptimal[3])
 
 # ╔═╡ 5669cbb3-adc4-4510-99fb-f23b379c9f79
 show_graph(config_graph, vertex_colors = [fill("black", length(suboptimal))..., fill("red", length(optimal))...], texts=fill("", Graphs.nv(config_graph)), vertex_size=0.1)
@@ -370,20 +384,6 @@ end
 # ╔═╡ d0823c1c-93f2-4c77-aebf-2af2077131e4
 samples = sample_sets(problem, 0:2:6, 1000)
 
-# ╔═╡ 0cbe86ed-40ca-4d63-acfb-68e0db834e58
-with_theme(plot_theme) do
-	ns = 0:length(poly.coeffs)-1
-	fig, ax, plt = plot(ns, log.(poly.coeffs))
-	ax.xlabel="number of atoms"
-	ax.ylabel="log(number of configurations)"
-	for (color, β, sample) in zip([RGBAf(0.8, 0.6, 0.1, 0.5), RGBAf(0.5, 0.7, 0.3, 0.5), RGBAf(0.6, 0.3, 0.3, 0.5), RGBAf(0.3, 0.7, 0.7, 0.5)], 0:2:6, samples)
-		log_sample = log.(max.(1, sample))
-		barplot!(ns, log_sample, color=color, opacity=0.4, label="β = $β")
-	end
-	axislegend("Samples", position = :lt)
-	fig
-end
-
 # ╔═╡ 22fac8cc-796c-4ef7-8f95-02baa34712ab
 show_graph(graph; locs=sites, vertex_colors=[(1-b, 1-b, 1-b) for b in getindex.(mars, 2)], texts=fill("", Graphs.nv(graph)))
 
@@ -409,14 +409,16 @@ show_graph(graph; locs=sites, edge_colors=[(b=mar[1, 1]; (1-b, 1-b, 1-b)) for ma
 # ╔═╡ 9047cead-0c1e-48dc-80f3-84ec15ebf799
 md"## Maximum a posterior estimation"
 
+# ╔═╡ 1799396a-a478-4037-a7c8-00888e7c6151
+md"The most probable configuration has $\log(p) = 102$, where $p$ is the unnomalized partition function."
+
 # ╔═╡ b26b418a-46e0-4f05-bdf5-6cebf725680d
 most_probable_config(pmodel)
 
-# ╔═╡ 79a65e23-8df1-47dc-b363-b4914fedd738
-let
-	pmodel = TensorNetworkModel(problem, β; evidence=Dict(1=>0))
-	most_probable_config(pmodel)
-end
+# ╔═╡ e85f1bea-9509-49c7-9acd-e35dc79d8b79
+md"""
+Let us fix the first spin to state 0, and check the most probable configuration.
+"""
 
 # ╔═╡ 05351dea-2443-41a0-b7f6-e27ee05fb50f
 md"""
@@ -436,11 +438,6 @@ Let $C$ be a constraint, and $G=(V, E, \boldsymbol{\delta})$ be a weighted graph
 # ╔═╡ eb38545c-3388-41ec-a483-4e784cb7d2c4
 md"""
 ### NOT gate
-"""
-
-# ╔═╡ 4a23222b-9612-461f-b91b-e9de3146bcc6
-md"""
-Let 
 """
 
 # ╔═╡ 3f3f580c-8a18-430d-b785-4a0efa354188
@@ -631,35 +628,6 @@ Solving the ground state of a many-body system must be difficult, otherwise some
 
 """
 
-# ╔═╡ 34c612bc-a98f-4214-a9d3-dab01e8ca2b6
-html"""
-<p>To get a systematic understanding of computational complexity theory and its relation with statistical physics.</p>
-<table style="border:none">
-<tr>
-	<td rowspan=4>
-	<img src="https://images-na.ssl-images-amazon.com/images/I/51QttTd6JLL._SX351_BO1,204,203,200_.jpg" width=200px/>
-	</td>
-	<td rowspan=1 align="center">
-	<big>The Nature of Computation</big><br><br>
-	By <strong>Cristopher Moore & Stephan Mertens</strong>
-	</td>
-</tr>
-<tr>
-	<td align="center">
-	<strong>Section 5</strong>
-	<br><br>Who is the hardest one of All?
-	<br>NP-Completeness
-	</td>
-</tr>
-<tr>
-	<td align="center">
-	<strong>Section 13</strong>
-	<br><br>Counting, sampling and statistical physics
-	</td>
-</tr>
-</table>
-"""
-
 # ╔═╡ 8bbd114b-9535-4255-b5b8-94f0826b707e
 md"""
 # Solving the challenge problem
@@ -763,6 +731,9 @@ fieldnames(typeof(sg))
 # ╔═╡ 9a598b10-2e54-46c8-869f-b7ec1a238152
 contraction_complexity(GenericTensorNetworks.target_problem(sg))
 
+# ╔═╡ 4f6fcdad-fa67-4768-a532-e9b3fae33b6c
+subtypes(GenericTensorNetworks.AbstractProperty)
+
 # ╔═╡ 5bda5ef8-62ce-4ae5-859c-4874a779bda6
 solve(sg, SizeMax())
 
@@ -772,13 +743,16 @@ solve(sg, CountingMax(); T=Int64)[]
 # ╔═╡ bb0009de-8bff-4820-bfd6-d92f17c0a2f8
 solve(sg, GraphPolynomial(; method=:finitefield))[]
 
+# ╔═╡ 0af9d505-6f29-4853-a765-73766a9d7447
+38521570090156831250.0
+
 # ╔═╡ 022c861e-f457-446e-b7cf-68a96f0da032
 md"""
 We emphasis that the spin-glass problem is reduced to the Max-Cut problem. Since we work on the target problem, the generated samples needs to be extracted.
 """
 
 # ╔═╡ cf0d7bb9-f310-43ea-8496-96a1d32be201
-configs_max = solve(sg, ConfigsMax(; tree_storage=true))[].c;
+configs_max = solve(sg, ConfigsMax(; tree_storage=true))[].c
 
 # ╔═╡ 9e3ab7b7-c226-4588-94cf-74a724cc7c1c
 best_samples = generate_samples(configs_max, 100)
@@ -823,6 +797,60 @@ LaurentPolynomial(2*x⁻⁵⁴⁰ + 180*x⁻⁵²⁸ + 1080*x⁻⁵¹⁸ + 6930*
 ```
 """
 
+# ╔═╡ 6e6ef181-144f-4516-87db-89dbb398ebe8
+md"""
+# Helper functions
+"""
+
+# ╔═╡ c662789f-19d1-4b75-ab95-dbe12c11330d
+begin  # helper functions
+	TableOfContents()
+	plot_theme = Theme(
+	    Axis = (
+	        xlabelsize=28,
+			ylabelsize=28,
+			xticklabelsize=20,
+			yticklabelsize=20,
+	    )
+	);
+	# utility for showing a configuration
+	function show_config(locs, graph, config)
+		show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[x == 1 ? "red" : "white" for x in config])
+	end
+	# utility for comparing two configurations
+	function compare_configs(locs, graph, config1, config2)
+		colormap = Dict((0, 0)=>"white", (0, 1)=>"blue", (1, 0)=>"red", (1, 1)=>"purple")
+		show_graph(graph; locs, texts=fill("", Graphs.nv(graph)), vertex_colors=[colormap[Int.((x, y))] for (x, y) in zip(config1, config2)])
+	end
+end;
+
+# ╔═╡ c550dd35-d27e-4ac9-933c-f297bda19378
+show_config(sites, graph, bestconfig.c.data)
+
+# ╔═╡ 3e0b902c-a004-45bd-b80b-caf20976db63
+compare_configs(sites, graph, suboptimal[2], suboptimal[3])
+
+# ╔═╡ 0cbe86ed-40ca-4d63-acfb-68e0db834e58
+with_theme(plot_theme) do
+	ns = 0:length(poly.coeffs)-1
+	fig, ax, plt = plot(ns, log.(poly.coeffs))
+	ax.xlabel="number of atoms"
+	ax.ylabel="log(number of configurations)"
+	for (color, β, sample) in zip([RGBAf(0.8, 0.6, 0.1, 0.5), RGBAf(0.5, 0.7, 0.3, 0.5), RGBAf(0.6, 0.3, 0.3, 0.5), RGBAf(0.3, 0.7, 0.7, 0.5)], 0:2:6, samples)
+		log_sample = log.(max.(1, sample))
+		barplot!(ns, log_sample, color=color, opacity=0.4, label="β = $β")
+	end
+	axislegend("Samples", position = :lt)
+	fig
+end
+
+# ╔═╡ b7df77f0-a5f7-4116-98d7-f5eeef4a8cda
+let
+	pmodel = TensorNetworkModel(problem, β; evidence=Dict(1=>0))
+	lop, cfg = most_probable_config(pmodel)
+	show_config(sites, graph, cfg)
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -837,7 +865,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 GenericTensorNetworks = "~1.3.5"
 PlutoUI = "~0.7.52"
 Rotations = "~1.5.1"
-TensorInference = "~0.2.1"
+TensorInference = "~0.3.0"
 UnitDiskMapping = "~0.3.1"
 WGLMakie = "~0.8.12"
 """
@@ -848,7 +876,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0-beta1"
 manifest_format = "2.0"
-project_hash = "37d424e18603726393965c92d1210d5fa001cec1"
+project_hash = "eac1d3c6fc0a657d8b52e19d6313118cb7dc430c"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1604,9 +1632,9 @@ version = "1.0.0"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
-git-tree-sha1 = "a7e91ef94114d5bc8952bcaa8d6ff952cf709808"
+git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.4.2"
+version = "1.5.0"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
@@ -1800,9 +1828,9 @@ version = "0.1.12"
 
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
-git-tree-sha1 = "c3ce8e7420b3a6e071e0fe4745f5d4300e37b13f"
+git-tree-sha1 = "5ab83e1679320064c29e8973034357655743d22d"
 uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
-version = "0.3.24"
+version = "0.3.25"
 
     [deps.LogExpFunctions.extensions]
     LogExpFunctionsChainRulesCoreExt = "ChainRulesCore"
@@ -2533,9 +2561,9 @@ version = "0.1.1"
 
 [[deps.TensorInference]]
 deps = ["Artifacts", "CUDA", "DocStringExtensions", "GenericTensorNetworks", "LinearAlgebra", "OMEinsum", "Pkg", "PrecompileTools", "Requires", "StatsBase", "TropicalNumbers"]
-git-tree-sha1 = "dd8977d7b305ee13fbc882571fe791ab364d7477"
+git-tree-sha1 = "4092771822a583740a859579469c4b10dccd2bc7"
 uuid = "c2297e78-99bd-40ad-871d-f50e56b81012"
-version = "0.2.1"
+version = "0.3.0"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
@@ -2792,11 +2820,12 @@ version = "3.5.0+0"
 
 # ╔═╡ Cell order:
 # ╠═c7417c94-3903-11ee-1ff1-89b2f3eb8673
-# ╠═c662789f-19d1-4b75-ab95-dbe12c11330d
-# ╠═877f87b9-59e4-4577-897c-eef44aa6e2eb
-# ╠═0f2c3023-262e-4afb-bf06-a8e8422f7339
-# ╠═541dd885-fc34-48d3-a71f-b1e4f8b8d41a
 # ╟─75837e42-6cdc-48c3-9568-639ccb48253f
+# ╟─b2e7bb00-e354-4b54-a5b4-38e4a257715e
+# ╟─e0a1ec3b-dbc3-4e9f-ae41-23d803de28dd
+# ╟─9c1119f9-1bd6-434c-8faa-97470138449d
+# ╟─34c612bc-a98f-4214-a9d3-dab01e8ca2b6
+# ╟─82957900-d283-489c-92a4-a51ebccd49e8
 # ╟─c1de542e-8d75-4eaa-a38e-36473839961a
 # ╟─fb341231-b682-4abc-a9d6-99e5ab54cd0e
 # ╟─2d649ed5-21f3-4486-9bc6-15532218d30f
@@ -2813,7 +2842,6 @@ version = "3.5.0+0"
 # ╟─9d00d7ae-df2e-4f69-894d-cf588a4823fc
 # ╟─4828777e-9a9f-4e38-bac3-3bad5849a59b
 # ╟─c774f1f6-741e-4529-b40a-333b80229f95
-# ╟─9c1119f9-1bd6-434c-8faa-97470138449d
 # ╟─617f67a7-f734-40b0-b452-60f8bcaae9eb
 # ╟─e432439e-6514-4d8e-ade4-624b506b7eac
 # ╠═1577ef93-a6b0-4169-8d4d-0b59ccb98462
@@ -2829,6 +2857,7 @@ version = "3.5.0+0"
 # ╠═6d7a2811-44e7-479f-92f9-9364da9962fe
 # ╟─3302ab31-e9ee-425c-9aa1-3235f3fa680b
 # ╟─db36f846-caf8-42cd-b6b3-4471532ae2ba
+# ╠═d853ac06-b997-4ada-82c0-8758328fcb4d
 # ╠═3582dadd-ff87-4422-8f57-350be309858c
 # ╠═a88b18a5-5a5d-4e23-8fca-f81bb7511f33
 # ╠═f044457b-bd98-44fe-bd23-5b7483b04a36
@@ -2867,13 +2896,14 @@ version = "3.5.0+0"
 # ╟─acc5d633-282e-48ef-9cd6-fd52755352b5
 # ╠═1f397c58-9c28-4b4c-8883-4ba6bdaf1f45
 # ╟─9047cead-0c1e-48dc-80f3-84ec15ebf799
+# ╟─1799396a-a478-4037-a7c8-00888e7c6151
 # ╠═b26b418a-46e0-4f05-bdf5-6cebf725680d
-# ╠═79a65e23-8df1-47dc-b363-b4914fedd738
+# ╟─e85f1bea-9509-49c7-9acd-e35dc79d8b79
+# ╠═b7df77f0-a5f7-4116-98d7-f5eeef4a8cda
 # ╟─05351dea-2443-41a0-b7f6-e27ee05fb50f
 # ╟─4e9a32bd-e275-4056-ae43-d3b2bc3cbb63
 # ╟─849a0df9-0e9d-472c-9de2-e82843916fd7
 # ╟─eb38545c-3388-41ec-a483-4e784cb7d2c4
-# ╠═4a23222b-9612-461f-b91b-e9de3146bcc6
 # ╠═3f3f580c-8a18-430d-b785-4a0efa354188
 # ╠═73a569ee-c503-4940-a30c-d36c9da949f2
 # ╠═eb120b4f-6a41-4ac1-a47d-07991328b2d6
@@ -2914,7 +2944,6 @@ version = "3.5.0+0"
 # ╟─37b9c75b-6419-4a4b-bc1c-019519c18ada
 # ╠═7c609e90-ecf6-4621-9934-8bbd347f0ffe
 # ╟─d1a0ae13-2b62-4e12-ad08-bef58b264402
-# ╟─34c612bc-a98f-4214-a9d3-dab01e8ca2b6
 # ╟─8bbd114b-9535-4255-b5b8-94f0826b707e
 # ╟─cd8998cd-e4f7-4871-b7c2-d2c06741db02
 # ╠═d1e4a420-eec2-4ae4-b7b5-4d0c80ec1e10
@@ -2933,9 +2962,11 @@ version = "3.5.0+0"
 # ╠═e3519f26-963b-417d-a5bb-e018de93791c
 # ╠═93b741b0-46ca-4f06-a210-c9418ac476e5
 # ╠═9a598b10-2e54-46c8-869f-b7ec1a238152
+# ╠═4f6fcdad-fa67-4768-a532-e9b3fae33b6c
 # ╠═5bda5ef8-62ce-4ae5-859c-4874a779bda6
 # ╠═d98a49e4-3733-498b-873f-dad6dbf1901b
 # ╠═bb0009de-8bff-4820-bfd6-d92f17c0a2f8
+# ╠═0af9d505-6f29-4853-a765-73766a9d7447
 # ╟─022c861e-f457-446e-b7cf-68a96f0da032
 # ╠═cf0d7bb9-f310-43ea-8496-96a1d32be201
 # ╠═9e3ab7b7-c226-4588-94cf-74a724cc7c1c
@@ -2945,5 +2976,7 @@ version = "3.5.0+0"
 # ╠═6624b46d-b73d-4531-a5f9-78e9cc0bf217
 # ╠═fdaa5423-f120-4429-ac1f-2c266b5eff47
 # ╟─afd8ec8f-1400-495c-89c1-dc58e9715c7c
+# ╟─6e6ef181-144f-4516-87db-89dbb398ebe8
+# ╠═c662789f-19d1-4b75-ab95-dbe12c11330d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
